@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fazenda Oásis - Gestão de Plantio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React e Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Bibliotecas de Exportação -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            letter-spacing: -0.01em;
+            background-color: #F8FAFC;
+        }
+        .logo-img { object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1)); }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        #export-container {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            background: white;
+            width: 1100px;
+            display: block !important;
+        }
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em;
+        }
+        @keyframes pulse-border {
+            0% { border-color: rgba(16, 185, 129, 0.2); }
+            50% { border-color: rgba(16, 185, 129, 1); }
+            100% { border-color: rgba(16, 185, 129, 0.2); }
+        }
+        .editing-mode {
+            animation: pulse-border 2s infinite;
+            border-width: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        const OASIS_LOGO_URL = "https://i.imgur.com/fx8tSao.png";
+
+        // Opções pré-definidas
+        const LISTA_BLOCOS = Array.from({ length: 15 }, (_, i) => `BLOCO ${String(i + 1).padStart(2, '0')}`);
+        const LISTA_VARIEDADES = [
+            "BRAGANTINO F1",
+            "BRO 68 SYNGENTA",
+            "CLARAMONT",
+            "MASTER TSV",
+            "PHARLAP",
+            "SAKATA JIRAYA F1",
+            "OUTRO..."
+        ];
+
+        const SvgIcon = ({ name, className = "w-4 h-4" }) => {
+            const icons = {
+                trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,
+                edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+                fileText: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,
+                truck: <><rect x="1" y="3" width="15" height="13"/><polyline points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,
+                plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+                image: <><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>,
+                leaf: <><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 21 2c-2.5 4-3 5.5-4.1 11.2A7 7 0 0 1 11 20z"/><path d="M11 20l-5-5"/></>,
+                tag: <><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>,
+                calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+                x: <><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>
+            };
+            return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
+        };
+
+        function App() {
+            const [blocos, setBlocos] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [isExporting, setIsExporting] = useState(false);
+            const [editingRef, setEditingRef] = useState(null);
+            const [showExportTemplate, setShowExportTemplate] = useState(false);
+            const reportRef = useRef(null);
+
+            const initialFormState = {
+                nomeBloco: 'BLOCO 01',
+                variedade: 'BRAGANTINO F1',
+                variedadeCustom: '',
+                bandejas: '',
+                dataChegada: new Date().toISOString().split('T')[0],
+                dataGerminacao: ''
+            };
+
+            const [formData, setFormData] = useState(initialFormState);
+
+            useEffect(() => {
+                const localData = localStorage.getItem('oasis_plantio_blocos_v1');
+                if (localData) setBlocos(JSON.parse(localData));
+                setLoading(false);
+            }, []);
+
+            const saveToLocal = (data) => {
+                localStorage.setItem('oasis_plantio_blocos_v1', JSON.stringify(data));
+                setBlocos(data);
+            };
+
+            const stats = useMemo(() => {
+                let totalBandejas = 0;
+                blocos.forEach(b => {
+                    b.variedades.forEach(v => {
+                        totalBandejas += (Number(v.bandejas) || 0);
+                    });
+                });
+                return { 
+                    totalBandejas, 
+                    totalMudas: totalBandejas * 200, 
+                    totalBlocos: blocos.length 
+                };
+            }, [blocos]);
+
+            const cancelEdit = () => {
+                setEditingRef(null);
+                setFormData(initialFormState);
+            };
+
+            const handleSave = (e) => {
+                e.preventDefault();
+                const bandejasNum = parseInt(formData.bandejas) || 0;
+                const nomeBlocoNorm = formData.nomeBloco;
+                
+                const nomeVariedade = formData.variedade === "OUTRO..." 
+                    ? formData.variedadeCustom.trim().toUpperCase() 
+                    : formData.variedade;
+
+                if (!nomeVariedade) return;
+
+                let updatedBlocos = [...blocos];
+
+                const novaVariedade = {
+                    id: editingRef ? editingRef.variedadeId : Date.now().toString(),
+                    nome: nomeVariedade,
+                    bandejas: bandejasNum,
+                    totalMudas: bandejasNum * 200,
+                    dataChegada: formData.dataChegada,
+                    dataGerminacao: formData.dataGerminacao
+                };
+
+                if (editingRef) {
+                    updatedBlocos = updatedBlocos.map(b => {
+                        // Se for o bloco original onde estava a variedade
+                        if (b.id === editingRef.blocoId) {
+                            // Se o nome do bloco mudou, removemos do antigo e adicionamos ao novo depois
+                            if (b.nome !== nomeBlocoNorm) {
+                                return { ...b, variedades: b.variedades.filter(v => v.id !== editingRef.variedadeId) };
+                            }
+                            // Se continua no mesmo bloco, apenas atualiza
+                            return {
+                                ...b,
+                                variedades: b.variedades.map(v => 
+                                    v.id === editingRef.variedadeId ? novaVariedade : v
+                                )
+                            };
+                        }
+                        return b;
+                    }).filter(b => b.variedades.length > 0);
+
+                    // Se mudou de bloco, precisamos inserir no bloco destino
+                    if (editingRef.blocoNome !== nomeBlocoNorm) {
+                        const indexDestino = updatedBlocos.findIndex(b => b.nome === nomeBlocoNorm);
+                        if (indexDestino !== -1) {
+                            updatedBlocos[indexDestino].variedades.push(novaVariedade);
+                        } else {
+                            updatedBlocos.unshift({
+                                id: Date.now().toString(),
+                                nome: nomeBlocoNorm,
+                                variedades: [novaVariedade]
+                            });
+                        }
+                    }
+                } else {
+                    const blocoExistenteIndex = updatedBlocos.findIndex(b => b.nome === nomeBlocoNorm);
+                    if (blocoExistenteIndex !== -1) {
+                        updatedBlocos[blocoExistenteIndex].variedades.push(novaVariedade);
+                    } else {
+                        updatedBlocos.unshift({
+                            id: Date.now().toString(),
+                            nome: nomeBlocoNorm,
+                            variedades: [novaVariedade]
+                        });
+                    }
+                }
+
+                saveToLocal(updatedBlocos);
+                setEditingRef(null);
+                setFormData(initialFormState);
+            };
+
+            const deleteVariedade = (blocoId, variedadeId) => {
+                if (confirm("Deseja remover esta variedade do bloco?")) {
+                    let updated = blocos.map(b => {
+                        if (b.id === blocoId) {
+                            return { ...b, variedades: b.variedades.filter(v => v.id !== variedadeId) };
+                        }
+                        return b;
+                    }).filter(b => b.variedades.length > 0);
+                    saveToLocal(updated);
+                }
+            };
+
+            const startEdit = (bloco, variedade) => {
+                setEditingRef({ blocoId: bloco.id, blocoNome: bloco.nome, variedadeId: variedade.id });
+                
+                const isCustom = !LISTA_VARIEDADES.includes(variedade.nome);
+
+                setFormData({
+                    nomeBloco: bloco.nome,
+                    variedade: isCustom ? "OUTRO..." : variedade.nome,
+                    variedadeCustom: isCustom ? variedade.nome : '',
+                    bandejas: variedade.bandejas,
+                    dataChegada: variedade.dataChegada,
+                    dataGerminacao: variedade.dataGerminacao || ''
+                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const captureReport = async () => {
+                setIsExporting(true);
+                setShowExportTemplate(true);
+                await new Promise(r => setTimeout(r, 800));
+                const element = reportRef.current;
+                const canvas = await html2canvas(element, { 
+                    scale: 2, 
+                    useCORS: true, 
+                    backgroundColor: "#ffffff", 
+                    windowWidth: 1100 
+                });
+                setShowExportTemplate(false);
+                setIsExporting(false);
+                return canvas;
+            };
+
+            const exportPDF = async () => {
+                const canvas = await captureReport();
+                const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save("Oasis_Relatorio_Plantio.pdf");
+            };
+
+            const exportJPEG = async () => {
+                const canvas = await captureReport();
+                const link = document.createElement('a');
+                link.download = "Oasis_Plantio.jpg";
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+            };
+
+            if (loading) return null;
+
+            return (
+                <div className="min-h-screen flex flex-col bg-[#F1F5F9] pb-20">
+                    
+                    {/* CABEÇALHO */}
+                    <header className="bg-[#062C1B] text-white p-5 shadow-xl sticky top-0 z-50 border-b-4 border-emerald-500/20">
+                        <div className="max-w-[1500px] mx-auto flex flex-col xl:flex-row justify-between items-center gap-6">
+                            <div className="flex items-center gap-5">
+                                <img src={OASIS_LOGO_URL} alt="Logo" className="h-12 logo-img" crossOrigin="anonymous" />
+                                <div>
+                                    <h1 className="text-2xl font-black uppercase tracking-tighter leading-none mb-2 text-emerald-50">Fazenda Oásis</h1>
+                                    <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest mt-2">Registro de chegada de mudas</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap justify-center gap-4 items-center glass-effect p-3 px-6 rounded-2xl border border-white/10 text-slate-900">
+                                <div className="text-center px-4">
+                                    <p className="text-[8px] font-black text-emerald-700 uppercase mb-0.5 tracking-widest">Mudas em Campo</p>
+                                    <p className="text-xl font-black">{stats.totalMudas.toLocaleString('pt-BR')} <span className="text-[10px] text-slate-400">un</span></p>
+                                </div>
+                                <div className="w-px h-8 bg-slate-200"></div>
+                                <div className="text-center px-4">
+                                    <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5 tracking-widest">Bandejas</p>
+                                    <p className="text-xl font-black">{stats.totalBandejas.toLocaleString('pt-BR')}</p>
+                                </div>
+                                <div className="flex gap-2 ml-4">
+                                    <button onClick={exportJPEG} title="Baixar Imagem" className="bg-white hover:bg-slate-100 text-slate-700 p-3 rounded-xl shadow-lg border border-slate-200 transition-all active:scale-95">
+                                        <SvgIcon name="image" />
+                                    </button>
+                                    <button onClick={exportPDF} className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-black text-[9px] uppercase flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                                        <SvgIcon name="fileText" /> {isExporting ? "Gerando..." : "Baixar PDF"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="max-w-[1400px] mx-auto w-full grid lg:grid-cols-[420px_1fr] gap-10 p-6 mt-4">
+                        
+                        {/* FORMULÁRIO COM EDIÇÃO */}
+                        <aside>
+                            <div className={`bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-200 sticky top-32 transition-all ${editingRef ? 'editing-mode ring-4 ring-emerald-500/20' : ''}`}>
+                                <div className="flex justify-between items-center mb-8">
+                                    <h2 className="text-[10px] font-black uppercase text-emerald-700 tracking-[0.2em] flex items-center gap-2">
+                                        <SvgIcon name={editingRef ? "edit" : "truck"} className="w-4 h-4" /> 
+                                        {editingRef ? "Corrigir Registro" : "Registrar Entrada"}
+                                    </h2>
+                                    {editingRef && (
+                                        <button onClick={cancelEdit} className="text-red-500 hover:bg-red-50 p-2 rounded-lg flex items-center gap-1 text-[9px] font-black uppercase">
+                                            <SvgIcon name="x" className="w-3 h-3" /> Cancelar
+                                        </button>
+                                    )}
+                                </div>
+
+                                <form onSubmit={handleSave} className="space-y-6">
+                                    <div>
+                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block">Selecione o Bloco</label>
+                                        <select 
+                                            required 
+                                            value={formData.nomeBloco} 
+                                            onChange={e => setFormData({...formData, nomeBloco: e.target.value})} 
+                                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-lg focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                                        >
+                                            {LISTA_BLOCOS.map(bloco => (
+                                                <option key={bloco} value={bloco}>{bloco}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block">Variedade / Cultura</label>
+                                        <select 
+                                            required 
+                                            value={formData.variedade} 
+                                            onChange={e => setFormData({...formData, variedade: e.target.value})} 
+                                            className="w-full p-4 bg-amber-50 border border-amber-100 rounded-2xl font-black text-lg focus:border-amber-500 outline-none text-amber-900 mb-3 cursor-pointer"
+                                        >
+                                            {LISTA_VARIEDADES.map(v => (
+                                                <option key={v} value={v}>{v}</option>
+                                            ))}
+                                        </select>
+
+                                        {formData.variedade === "OUTRO..." && (
+                                            <input 
+                                                type="text" 
+                                                required 
+                                                placeholder="DIGITE O NOME DA VARIEDADE" 
+                                                value={formData.variedadeCustom} 
+                                                onChange={e => setFormData({...formData, variedadeCustom: e.target.value})} 
+                                                className="w-full p-4 bg-white border-2 border-amber-200 rounded-2xl font-black text-lg focus:border-amber-500 outline-none text-amber-900 placeholder:text-amber-200 uppercase"
+                                            />
+                                        )}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block">Data Chegada</label>
+                                            <input type="date" required value={formData.dataChegada} onChange={e => setFormData({...formData, dataChegada: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-sm" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block">Data Germinação</label>
+                                            <input type="date" value={formData.dataGerminacao} onChange={e => setFormData({...formData, dataGerminacao: e.target.value})} className="w-full p-4 bg-emerald-50 border border-emerald-100 rounded-2xl font-bold text-sm" />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block">Quantidade de Bandejas</label>
+                                        <div className="relative">
+                                            <input type="number" required placeholder="0" value={formData.bandejas} onChange={e => setFormData({...formData, bandejas: e.target.value})} className="w-full p-6 bg-emerald-50 border border-emerald-100 rounded-[2rem] font-black text-4xl text-center text-emerald-900 outline-none" />
+                                            <div className="absolute inset-x-0 -bottom-4 flex justify-center">
+                                                <div className="bg-emerald-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2">
+                                                    {(parseInt(formData.bandejas) || 0) * 200} MUDAS
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" className={`w-full mt-8 text-white font-black py-5 rounded-2xl shadow-xl uppercase text-[11px] flex items-center justify-center gap-3 transition-all active:scale-95 ${editingRef ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#062C1B] hover:bg-[#0A4229]'}`}>
+                                        <SvgIcon name={editingRef ? "edit" : "plus"} /> {editingRef ? "Atualizar Dados (Salvar Correção)" : "Adicionar ao Bloco"}
+                                    </button>
+                                </form>
+                            </div>
+                        </aside>
+
+                        {/* LISTA DE BLOCOS */}
+                        <section className="space-y-6">
+                            <div className="flex justify-between items-end px-2">
+                                <h2 className="text-xl font-black text-slate-800 uppercase italic tracking-tight">Plantios por Bloco</h2>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">{stats.totalBlocos} Áreas Ativas</p>
+                            </div>
+
+                            {blocos.length === 0 ? (
+                                <div className="bg-white rounded-[3rem] border-2 border-dashed border-slate-200 p-24 text-center">
+                                    <SvgIcon name="truck" className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                                    <p className="text-slate-300 font-black uppercase text-xs tracking-widest">Inicie o registro de plantio</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-8">
+                                    {blocos.map(bloco => {
+                                        const blocoBandejas = bloco.variedades.reduce((a,v) => a + v.bandejas, 0);
+                                        const blocoMudas = blocoBandejas * 200;
+
+                                        return (
+                                            <div key={bloco.id} className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
+                                                <div className="bg-slate-50 px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="bg-emerald-700 text-white p-3 rounded-2xl">
+                                                            <SvgIcon name="leaf" className="w-5 h-5" />
+                                                        </div>
+                                                        <h3 className="text-xl font-black text-slate-900 tracking-tighter uppercase">{bloco.nome}</h3>
+                                                    </div>
+                                                    <div className="flex items-center gap-6 bg-white px-5 py-2 rounded-2xl border border-slate-200">
+                                                        <div className="text-center">
+                                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Bandejas</p>
+                                                            <p className="font-black text-slate-800 text-lg leading-none">{blocoBandejas}</p>
+                                                        </div>
+                                                        <div className="w-px h-6 bg-slate-100"></div>
+                                                        <div className="text-right">
+                                                            <p className="text-[8px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Total Mudas</p>
+                                                            <p className="font-black text-emerald-700 text-xl leading-none">{blocoMudas.toLocaleString('pt-BR')}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="p-4 space-y-3">
+                                                    {bloco.variedades.map(v => (
+                                                        <div key={v.id} className={`flex flex-col md:flex-row items-center justify-between p-6 rounded-3xl bg-slate-50/50 border transition-all group ${editingRef?.variedadeId === v.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-100 hover:border-emerald-200'}`}>
+                                                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                                                <div className={`p-2.5 rounded-xl ${editingRef?.variedadeId === v.id ? 'bg-emerald-600 text-white' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                                    <SvgIcon name="tag" className="w-5 h-5" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-2 mb-1.5">
+                                                                        <p className="font-black text-slate-900 uppercase text-base">{v.nome}</p>
+                                                                        {editingRef?.variedadeId === v.id && <span className="text-[8px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded-full uppercase animate-pulse">Editando</span>}
+                                                                    </div>
+                                                                    <div className="flex flex-col sm:flex-row sm:gap-6 gap-2">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <SvgIcon name="calendar" className="w-3.5 h-3.5 text-slate-400" />
+                                                                            <span className="text-[11px] font-black text-slate-600 uppercase">CHEGADA: <span className="text-slate-900 text-[12px]">{v.dataChegada.split('-').reverse().join('/')}</span></span>
+                                                                        </div>
+                                                                        {v.dataGerminacao && (
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div className="w-1 h-1 rounded-full bg-emerald-400 hidden sm:block"></div>
+                                                                                <span className="text-[11px] font-black text-emerald-600 uppercase">GERMINAÇÃO: <span className="text-emerald-800 text-[12px]">{v.dataGerminacao.split('-').reverse().join('/')}</span></span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-8 mt-6 md:mt-0 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-4 md:pt-0">
+                                                                <div className="text-right">
+                                                                    <p className="text-[9px] font-black text-slate-400 uppercase leading-none mb-1">{v.bandejas} Bandejas</p>
+                                                                    <p className="text-2xl font-black text-emerald-700 leading-none">{(v.bandejas * 200).toLocaleString('pt-BR')}</p>
+                                                                </div>
+                                                                <div className="flex gap-1">
+                                                                    <button 
+                                                                        onClick={() => startEdit(bloco, v)} 
+                                                                        title="Corrigir Registro"
+                                                                        className={`p-3 rounded-xl border shadow-sm transition-all active:scale-90 flex items-center gap-2 ${editingRef?.variedadeId === v.id ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-400 border-slate-100 hover:bg-emerald-600 hover:text-white'}`}
+                                                                    >
+                                                                        <SvgIcon name="edit" className="w-4 h-4" />
+                                                                        <span className="text-[9px] font-black uppercase md:hidden lg:inline">Editar</span>
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={() => deleteVariedade(bloco.id, v.id)} 
+                                                                        className="p-3 bg-white hover:bg-red-600 hover:text-white rounded-xl text-slate-400 border border-slate-100 shadow-sm transition-all active:scale-90"
+                                                                    >
+                                                                        <SvgIcon name="trash" className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </section>
+                    </main>
+
+                    {/* TEMPLATE DE EXPORTAÇÃO */}
+                    {showExportTemplate && (
+                        <div id="export-container" ref={reportRef}>
+                            <div className="p-16">
+                                <div className="flex justify-between items-center border-b-8 border-emerald-900 pb-12 mb-12">
+                                    <div className="flex items-center gap-8">
+                                        <img src={OASIS_LOGO_URL} alt="Logo" className="h-24" crossOrigin="anonymous" />
+                                        <div>
+                                            <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tighter mb-2">Fazenda Oásis</h1>
+                                            <p className="text-emerald-600 font-black tracking-[0.4em] text-xl uppercase">Registro de chegada de mudas</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-slate-900 font-black text-4xl italic">{new Date().toLocaleDateString('pt-BR')}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Relatório Consolidado</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-6 mb-12">
+                                    <div className="bg-emerald-900 text-white p-12 rounded-[3.5rem] shadow-2xl">
+                                        <p className="text-xs font-black text-emerald-400 uppercase mb-3 tracking-[0.2em]">Total Geral de Mudas</p>
+                                        <p className="text-6xl font-black tracking-tighter">{stats.totalMudas.toLocaleString('pt-BR')}</p>
+                                    </div>
+                                    <div className="bg-slate-50 p-12 rounded-[3.5rem] border border-slate-100 text-center">
+                                        <p className="text-xs font-black text-slate-400 uppercase mb-3 tracking-[0.2em]">Volume Total Bandejas</p>
+                                        <p className="text-6xl font-black text-slate-800">{stats.totalBandejas.toLocaleString('pt-BR')}</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-10">
+                                    {blocos.map(b => (
+                                        <div key={b.id} className="border-2 border-slate-100 rounded-[3rem] p-10">
+                                            <div className="flex justify-between items-center border-b border-slate-100 pb-6 mb-6">
+                                                <h2 className="text-4xl font-black text-slate-900 uppercase italic">{b.nome}</h2>
+                                                <div className="text-right">
+                                                    <p className="text-xl font-black text-emerald-800 tracking-tighter">
+                                                        {(b.variedades.reduce((acc,v) => acc + v.bandejas, 0) * 200).toLocaleString('pt-BR')} MUDAS TOTAL
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {b.variedades.map(v => (
+                                                    <div key={v.id} className="bg-slate-50 p-6 rounded-3xl flex justify-between items-center">
+                                                        <div>
+                                                            <p className="text-xl font-black text-slate-800 uppercase leading-none mb-3">{v.nome}</p>
+                                                            <p className="text-[12px] font-black text-slate-600 uppercase">CHEGADA: {v.dataChegada.split('-').reverse().join('/')}</p>
+                                                            {v.dataGerminacao && <p className="text-[12px] font-black text-emerald-600 uppercase mt-1">GERMINAÇÃO: {v.dataGerminacao.split('-').reverse().join('/')}</p>}
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-3xl font-black text-emerald-700 leading-none">{(v.bandejas * 200).toLocaleString('pt-BR')}</p>
+                                                            <p className="text-[9px] font-black text-slate-300 uppercase mt-1">{v.bandejas} Band.</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="mt-24 text-center border-t border-slate-100 pt-12">
+                                    <p className="text-[12px] font-black text-slate-300 uppercase tracking-[0.6em]">Documento Oficial Gerado por Fazenda Oásis Plantio</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
