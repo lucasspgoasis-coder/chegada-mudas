@@ -16,17 +16,19 @@
             font-family: 'Inter', sans-serif; 
             letter-spacing: -0.01em;
             background-color: #F8FAFC;
+            margin: 0;
+            padding: 0;
         }
         .stats-flash-card {
-            background-color: #DCFCE7;
-            border: 1px solid #BBF7D0;
+            background-color: #E2FBE9; /* Verde claro sólido */
+            border: none;
         }
         #export-container {
             position: absolute;
             left: -9999px;
             top: 0;
             background: white;
-            width: 1000px;
+            width: 850px;
             display: block !important;
         }
         select {
@@ -190,7 +192,7 @@
             const captureReport = async (qualityScale = 2) => {
                 setShowExportTemplate(true);
                 await new Promise(r => setTimeout(r, 800)); 
-                const canvas = await html2canvas(reportRef.current, { scale: qualityScale, useCORS: true, backgroundColor: "#ffffff", windowWidth: 1000 });
+                const canvas = await html2canvas(reportRef.current, { scale: qualityScale, useCORS: true, backgroundColor: "#ffffff", windowWidth: 850 });
                 setShowExportTemplate(false);
                 return canvas;
             };
@@ -198,7 +200,7 @@
             const downloadJpeg = async () => {
                 const canvas = await captureReport(3);
                 const link = document.createElement('a');
-                link.download = `Relatorio_Oasis.jpg`;
+                link.download = `Relatorio_Oasis_WhatsApp.jpg`;
                 link.href = canvas.toDataURL('image/jpeg', 0.95);
                 link.click();
             };
@@ -217,112 +219,113 @@
             return (
                 <div className="min-h-screen flex flex-col bg-[#F1F5F9] pb-20">
                     
-                    {/* CABEÇALHO COM TÍTULO E SUBTÍTULO */}
-                    <header className="bg-[#062C1B] text-white p-6 shadow-xl sticky top-0 z-50">
-                        <div className="max-w-[1500px] mx-auto flex flex-col xl:flex-row justify-between items-center gap-6">
-                            <div className="flex items-center gap-4">
-                                <img src={OASIS_LOGO_URL} alt="Logo" className="h-12 logo-img" crossOrigin="anonymous" />
-                                <div className="flex flex-col">
-                                    <div className="flex items-center gap-3">
-                                        <h1 className="text-3xl font-black uppercase tracking-tighter text-emerald-50 whitespace-nowrap leading-none">Fazenda Oásis</h1>
-                                        <SvgIcon name="truck" className="w-8 h-8 text-emerald-400" />
-                                    </div>
-                                    <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.2em] mt-1 ml-0.5">Registro de chegada de mudas</p>
+                    {/* CABEÇALHO INTEGRAL */}
+                    <header className="bg-[#062C1B] text-white p-5 shadow-2xl sticky top-0 z-50 w-full">
+                        <div className="max-w-[1550px] mx-auto flex flex-col xl:flex-row justify-between items-center gap-6">
+                            <div className="flex items-center gap-5">
+                                <img src={OASIS_LOGO_URL} alt="Logo" className="h-14 logo-img" crossOrigin="anonymous" />
+                                <div className="flex items-center gap-4">
+                                    <h1 className="text-3xl font-black uppercase tracking-tighter text-emerald-50 whitespace-nowrap leading-none">Fazenda Oásis</h1>
+                                    <div className="h-6 w-px bg-emerald-700/50 hidden md:block"></div>
+                                    <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.2em] leading-none mt-1 hidden md:block">Gestão Profissional de Cargas de Mudas</p>
+                                    <SvgIcon name="truck" className="w-8 h-8 text-emerald-400" />
                                 </div>
                             </div>
                             
-                            {/* FLASH CARD ESTATÍSTICAS */}
-                            <div className="stats-flash-card w-full xl:w-auto px-10 py-4 rounded-2xl flex items-center justify-center gap-12 shadow-sm border-2 border-emerald-300">
+                            {/* FLASH CARD UNIFICADO - REDUZIDO E SEM TEXTURAS */}
+                            <div className="stats-flash-card w-full xl:w-auto px-12 py-3 rounded-2xl flex items-center justify-center gap-12 shadow-sm border-none">
                                 <div className="flex flex-col items-center justify-center text-center">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <SvgIcon name="grid" className="w-4 h-4 text-emerald-700" />
-                                        <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Total Blocos</p>
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <SvgIcon name="grid" className="w-3.5 h-3.5 text-emerald-700" />
+                                        <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Blocos</p>
                                     </div>
-                                    <p className="text-3xl font-black text-emerald-950 leading-none">{stats.totalBlocos}</p>
+                                    <p className="text-xl font-black text-emerald-950 leading-none">{stats.totalBlocos}</p>
                                 </div>
-                                <div className="w-px h-10 bg-emerald-300"></div>
+                                <div className="w-px h-8 bg-emerald-300 opacity-30"></div>
                                 <div className="flex flex-col items-center justify-center text-center">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <SvgIcon name="sprouts" className="w-4 h-4 text-emerald-700" />
-                                        <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Total Mudas</p>
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <SvgIcon name="sprouts" className="w-3.5 h-3.5 text-emerald-700" />
+                                        <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Mudas</p>
                                     </div>
-                                    <p className="text-3xl font-black text-emerald-950 leading-none">{stats.totalMudas.toLocaleString('pt-BR')}</p>
+                                    <p className="text-xl font-black text-emerald-950 leading-none">{stats.totalMudas.toLocaleString('pt-BR')}</p>
                                 </div>
-                                <div className="w-px h-10 bg-emerald-300"></div>
+                                <div className="w-px h-8 bg-emerald-300 opacity-30"></div>
                                 <div className="flex flex-col items-center justify-center text-center">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <SvgIcon name="layers" className="w-4 h-4 text-emerald-700" />
-                                        <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Total Bandejas</p>
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <SvgIcon name="layers" className="w-3.5 h-3.5 text-emerald-700" />
+                                        <p className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Bandejas</p>
                                     </div>
-                                    <p className="text-3xl font-black text-emerald-950 leading-none">{stats.totalBandejas.toLocaleString('pt-BR')}</p>
+                                    <p className="text-xl font-black text-emerald-950 leading-none">{stats.totalBandejas.toLocaleString('pt-BR')}</p>
                                 </div>
                             </div>
 
                             <div className="flex gap-2">
-                                <button onClick={downloadJpeg} className="bg-[#25D366] hover:bg-[#128C7E] text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95">
+                                <button onClick={downloadJpeg} className="bg-[#25D366] hover:bg-[#128C7E] text-white px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all active:scale-95 group">
                                     <SvgIcon name="download" />
-                                    <span className="text-[10px] font-black uppercase">Imagem</span>
+                                    <span className="text-[10px] font-black uppercase">Exportar WhatsApp</span>
                                 </button>
                                 <button onClick={exportPDF} className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase flex items-center gap-2 shadow-lg transition-all active:scale-95">
                                     <SvgIcon name="fileText" /> PDF
                                 </button>
-                                <button onClick={() => setShowDeleteModal(true)} className="bg-white hover:bg-red-50 text-red-500 p-2.5 rounded-xl shadow-lg border border-slate-200 transition-all active:scale-95">
+                                <button onClick={() => setShowDeleteModal(true)} className="bg-white/10 hover:bg-red-500 text-white p-2.5 rounded-xl shadow-lg border border-white/20 transition-all active:scale-95">
                                     <SvgIcon name="trash" />
                                 </button>
                             </div>
                         </div>
                     </header>
 
-                    <main className="max-w-[1400px] mx-auto w-full grid lg:grid-cols-[380px_1fr] gap-10 p-6 mt-8">
+                    <main className="max-w-[1500px] mx-auto w-full grid lg:grid-cols-[380px_1fr] gap-10 p-6 mt-4">
                         {/* FORMULÁRIO LATERAL */}
                         <aside>
-                            <div className={`bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-200 sticky top-32 transition-all ${editingRef ? 'editing-mode ring-4 ring-emerald-500/20' : ''}`}>
-                                <h2 className="text-[11px] font-black uppercase text-emerald-900 tracking-wider mb-8 flex items-center gap-3">
-                                    <SvgIcon name="truck" className="w-6 h-6 text-emerald-600" />
-                                    {editingRef ? "Editar" : "Novo"} Registro de Carga
+                            <div className={`bg-white p-7 rounded-[2.5rem] shadow-xl border border-slate-200 sticky top-36 transition-all ${editingRef ? 'editing-mode ring-4 ring-emerald-500/10' : ''}`}>
+                                <h2 className="text-[11px] font-black uppercase text-emerald-900 tracking-wider mb-7 flex items-center gap-3">
+                                    <div className="p-2 bg-emerald-100 rounded-lg">
+                                        <SvgIcon name="truck" className="w-5 h-5 text-emerald-700" />
+                                    </div>
+                                    {editingRef ? "Alterar Registro" : "Novo Recebimento"}
                                 </h2>
 
                                 <form onSubmit={handleSave} className="space-y-5">
                                     <div>
-                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block tracking-widest">Bloco Destino</label>
-                                        <select required value={formData.nomeBloco} onChange={e => setFormData({...formData, nomeBloco: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-black text-lg">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Local do Plantio</label>
+                                        <select required value={formData.nomeBloco} onChange={e => setFormData({...formData, nomeBloco: e.target.value})} className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-black text-lg text-slate-900 focus:border-emerald-500 outline-none transition-all">
                                             {LISTA_BLOCOS.map(bloco => (<option key={bloco} value={bloco}>{bloco}</option>))}
                                         </select>
                                     </div>
 
                                     <div>
-                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block tracking-widest">Variedade</label>
-                                        <select required value={formData.variedade} onChange={e => setFormData({...formData, variedade: e.target.value})} className="w-full p-4 bg-amber-50 border border-amber-100 rounded-xl font-black text-lg text-amber-900 mb-2">
+                                        <label className="text-[9px] font-black text-slate-400 uppercase ml-2 mb-2 block tracking-widest">Variedade da Muda</label>
+                                        <select required value={formData.variedade} onChange={e => setFormData({...formData, variedade: e.target.value})} className="w-full p-3.5 bg-amber-50 border border-amber-100 rounded-xl font-black text-lg text-amber-900 mb-2.5 outline-none focus:border-amber-400">
                                             {LISTA_VARIEDADES.map(v => (<option key={v} value={v}>{v}</option>))}
                                         </select>
                                         {formData.variedade === "OUTRO..." && (
-                                            <input type="text" required placeholder="NOME DA VARIEDADE" value={formData.variedadeCustom} onChange={e => setFormData({...formData, variedadeCustom: e.target.value})} className="w-full p-4 bg-white border-2 border-amber-200 rounded-xl font-black text-lg text-amber-900 uppercase" />
+                                            <input type="text" required placeholder="NOME DA VARIEDADE" value={formData.variedadeCustom} onChange={e => setFormData({...formData, variedadeCustom: e.target.value})} className="w-full p-3.5 bg-white border border-amber-200 rounded-xl font-black text-lg text-amber-900 uppercase focus:ring-4 focus:ring-amber-50 outline-none" />
                                         )}
                                     </div>
                                     
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="flex flex-col gap-1.5">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Chegada</label>
-                                            <input type="date" required value={formData.dataChegada} onChange={e => setFormData({...formData, dataChegada: e.target.value})} className="p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs" />
+                                            <label className="text-[9px] font-black text-orange-600 uppercase tracking-widest ml-1">Chegada</label>
+                                            <input type="date" required value={formData.dataChegada} onChange={e => setFormData({...formData, dataChegada: e.target.value})} className="p-3.5 bg-orange-50/50 border border-orange-100 rounded-xl font-bold text-xs outline-none" />
                                         </div>
                                         <div className="flex flex-col gap-1.5">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Germinação</label>
-                                            <input type="date" value={formData.dataGerminacao} onChange={e => setFormData({...formData, dataGerminacao: e.target.value})} className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl font-bold text-xs" />
+                                            <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1">Germinação</label>
+                                            <input type="date" value={formData.dataGerminacao} onChange={e => setFormData({...formData, dataGerminacao: e.target.value})} className="p-3.5 bg-emerald-50 border border-emerald-100 rounded-xl font-bold text-xs outline-none" />
                                         </div>
                                     </div>
 
                                     <div className="relative pt-4">
-                                        <label className="text-[9px] font-black text-slate-400 uppercase text-center block mb-4">Nº Bandejas</label>
-                                        <input type="number" required value={formData.bandejas} onChange={e => setFormData({...formData, bandejas: e.target.value})} className="w-full p-6 bg-emerald-50 border border-emerald-100 rounded-[2rem] font-black text-4xl text-center text-emerald-900 outline-none" />
+                                        <label className="text-[9px] font-black text-slate-400 uppercase text-center block mb-3 tracking-widest">Nº de Bandejas</label>
+                                        <input type="number" required value={formData.bandejas} onChange={e => setFormData({...formData, bandejas: e.target.value})} className="w-full p-6 bg-emerald-50 border border-emerald-100 rounded-[2rem] font-black text-4xl text-center text-emerald-900 outline-none focus:border-emerald-500 transition-all" />
                                         <div className="absolute inset-x-0 -bottom-3 flex justify-center">
-                                            <div className="bg-emerald-600 text-white text-[9px] font-black px-4 py-1.5 rounded-full shadow-md uppercase">
+                                            <div className="bg-emerald-600 text-white text-[9px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest border border-white/20">
                                                 {(parseInt(formData.bandejas) || 0) * 200} MUDAS
                                             </div>
                                         </div>
                                     </div>
 
-                                    <button type="submit" className={`w-full mt-8 text-white font-black py-4 rounded-xl shadow-lg uppercase text-[11px] flex items-center justify-center gap-2 transition-all ${editingRef ? 'bg-emerald-600' : 'bg-[#062C1B]'}`}>
-                                        <SvgIcon name="truck" className="w-5 h-5" /> {editingRef ? "Salvar" : "Registrar"}
+                                    <button type="submit" className={`w-full mt-8 text-white font-black py-4 rounded-xl shadow-lg uppercase text-[11px] flex items-center justify-center gap-2.5 transition-all hover:scale-[1.02] active:scale-95 ${editingRef ? 'bg-emerald-600' : 'bg-[#062C1B]'}`}>
+                                        <SvgIcon name="truck" className="w-5 h-5" /> {editingRef ? "Confirmar Edição" : "Lançar Registro"}
                                     </button>
                                 </form>
                             </div>
@@ -331,64 +334,63 @@
                         {/* LISTA DE BLOCOS REGISTRADOS */}
                         <section className="space-y-10">
                             {sortedBlocos.map(bloco => (
-                                <div key={bloco.id} className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
-                                    <div className="bg-slate-900 px-8 py-6 border-b border-slate-100 flex justify-between items-center text-white">
-                                        <div className="flex items-center gap-4 flex-1">
-                                            <SvgIcon name="truck" className="w-10 h-10 text-emerald-400" />
-                                            <div className="flex items-center gap-6">
-                                                <h3 className="text-3xl font-black uppercase tracking-tighter">{bloco.nome}</h3>
-                                                <div className="h-8 w-px bg-slate-700 hidden md:block"></div>
-                                                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest hidden md:block">Inventário Ativo</p>
+                                <div key={bloco.id} className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden group">
+                                    <div className="bg-slate-900 px-8 py-6 flex justify-between items-center text-white border-b border-slate-800">
+                                        <div className="flex items-center gap-5">
+                                            <div className="p-3.5 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                                                <SvgIcon name="truck" className="w-8 h-8 text-emerald-400" />
                                             </div>
+                                            <h3 className="text-3xl font-black uppercase tracking-tighter text-white">{bloco.nome}</h3>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Mudas no Bloco</p>
-                                            <p className="font-black text-white text-3xl">{(bloco.variedades.reduce((a,v) => a + v.bandejas, 0) * 200).toLocaleString('pt-BR')}</p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Mudas no Bloco</p>
+                                            <p className="font-black text-emerald-400 text-3xl leading-none">{(bloco.variedades.reduce((a,v) => a + v.bandejas, 0) * 200).toLocaleString('pt-BR')}</p>
                                         </div>
                                     </div>
                                     
                                     <div className="p-6 space-y-4">
                                         {bloco.variedades.map(v => (
-                                            <div key={v.id} className="flex flex-col md:flex-row items-center justify-between p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-emerald-200 transition-colors group relative">
+                                            <div key={v.id} className="flex flex-col md:flex-row items-center justify-between p-6 rounded-[2rem] bg-white border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/10 transition-all group relative">
                                                 <div className="absolute top-4 right-8 flex gap-2">
-                                                    <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-3 py-1 rounded-full border border-emerald-100">SEM {v.semanaAno}</span>
-                                                    <span className="bg-slate-50 text-slate-400 text-[9px] font-black px-3 py-1 rounded-full border border-slate-100">{v.horaRegistro}</span>
+                                                    <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-3 py-1 rounded-full border border-emerald-100 uppercase">Semana {v.semanaAno}</span>
+                                                    <span className="bg-slate-50 text-slate-400 text-[9px] font-black px-3 py-1 rounded-full border border-slate-100 uppercase">{v.horaRegistro}</span>
                                                 </div>
 
                                                 <div className="flex items-center gap-6">
-                                                    <SvgIcon name="truck" className="w-8 h-8 text-emerald-600 group-hover:scale-110 transition-transform" />
+                                                    <div className="p-3 bg-slate-100 rounded-2xl">
+                                                        <SvgIcon name="truck" className="w-6 h-6 text-slate-900" />
+                                                    </div>
                                                     <div>
-                                                        <p className="font-black text-slate-900 uppercase text-xl mb-1">{v.nome}</p>
-                                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-black uppercase tracking-wide">
-                                                            <div className="flex items-center gap-1.5 text-orange-600">
-                                                                <span className="opacity-40">Chegada:</span>
-                                                                <span>{v.dataChegada.split('-').reverse().join('/')}</span>
+                                                        <p className="font-black text-slate-900 uppercase text-xl mb-1.5 tracking-tight">{v.nome}</p>
+                                                        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                                                            <div className="flex items-center gap-1.5 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100">
+                                                                <SvgIcon name="truck" className="w-3 h-3 text-orange-600" />
+                                                                <span className="text-[10px] font-black text-orange-700 uppercase">CHEGADA: {v.dataChegada.split('-').reverse().join('/')}</span>
                                                             </div>
                                                             {v.dataGerminacao && (
-                                                                <div className="flex items-center gap-1.5 text-emerald-600">
-                                                                    <span className="opacity-40">Germinação:</span>
-                                                                    <span>{v.dataGerminacao.split('-').reverse().join('/')}</span>
+                                                                <div className="flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+                                                                    <SvgIcon name="truck" className="w-3 h-3 text-emerald-600" />
+                                                                    <span className="text-[10px] font-black text-emerald-700 uppercase">GERMINAÇÃO: {v.dataGerminacao.split('-').reverse().join('/')}</span>
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 </div>
                                                 
-                                                {/* ÁREA DE TOTAIS CENTRALIZADA */}
-                                                <div className="flex items-center justify-center flex-1 md:px-10 mt-8 md:mt-0">
+                                                <div className="flex items-center justify-center flex-1 md:px-8 mt-8 md:mt-0">
                                                     <div className="flex items-center gap-10">
-                                                        <div className="text-center">
-                                                            <div className="flex items-center justify-center gap-2 mb-0.5">
+                                                        <div className="text-center group-hover:scale-105 transition-transform">
+                                                            <div className="flex items-center justify-center gap-2.5 mb-0.5">
                                                                 <SvgIcon name="sprouts" className="w-5 h-5 text-emerald-600" />
-                                                                <p className="text-3xl font-black text-emerald-700 leading-tight">{(v.bandejas * 200).toLocaleString('pt-BR')}</p>
+                                                                <p className="text-3xl font-black text-slate-900 leading-tight">{(v.bandejas * 200).toLocaleString('pt-BR')}</p>
                                                             </div>
-                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Mudas</p>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Volume Mudas</p>
                                                         </div>
                                                         <div className="w-px h-10 bg-slate-100"></div>
-                                                        <div className="text-center">
-                                                            <div className="flex items-center justify-center gap-2 mb-0.5">
+                                                        <div className="text-center group-hover:scale-105 transition-transform">
+                                                            <div className="flex items-center justify-center gap-2.5 mb-0.5">
                                                                 <SvgIcon name="layers" className="w-5 h-5 text-emerald-600" />
-                                                                <p className="text-3xl font-black text-emerald-700 leading-tight">{v.bandejas}</p>
+                                                                <p className="text-3xl font-black text-slate-900 leading-tight">{v.bandejas}</p>
                                                             </div>
                                                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bandejas</p>
                                                         </div>
@@ -407,11 +409,11 @@
                                                             dataGerminacao: v.dataGerminacao || ''
                                                         });
                                                         window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                    }} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-emerald-600 hover:text-white transition-all"><SvgIcon name="edit" /></button>
+                                                    }} className="p-3.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"><SvgIcon name="edit" /></button>
                                                     <button onClick={() => {
                                                         const updated = blocos.map(b => b.id === bloco.id ? { ...b, variedades: b.variedades.filter(vari => vari.id !== v.id) } : b).filter(b => b.variedades.length > 0);
                                                         saveToLocal(updated);
-                                                    }} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-red-600 hover:text-white transition-all"><SvgIcon name="trash" /></button>
+                                                    }} className="p-3.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"><SvgIcon name="trash" /></button>
                                                 </div>
                                             </div>
                                         ))}
@@ -423,97 +425,103 @@
 
                     {/* MODAL DE LIMPEZA */}
                     {showDeleteModal && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
-                            <div className="bg-white rounded-[2rem] p-10 max-w-sm w-full text-center shadow-2xl">
-                                <SvgIcon name="alert" className="w-16 h-16 text-red-500 mx-auto mb-6" />
-                                <h3 className="text-2xl font-black text-slate-900 uppercase mb-4">Limpar Tudo?</h3>
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md">
+                            <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full text-center shadow-2xl border border-slate-200">
+                                <div className="p-5 bg-red-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 border border-red-100">
+                                    <SvgIcon name="alert" className="w-10 h-10 text-red-500" />
+                                </div>
+                                <h3 className="text-2xl font-black text-slate-900 uppercase mb-3 tracking-tighter">Zerar Dados?</h3>
+                                <p className="text-slate-400 text-[11px] font-medium mb-8 leading-relaxed uppercase tracking-wider px-4">Esta ação apagará todo o histórico de lançamentos. Deseja prosseguir?</p>
                                 <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={() => setShowDeleteModal(false)} className="py-3 rounded-xl bg-slate-100 text-slate-600 font-black uppercase text-[10px]">Não</button>
-                                    <button onClick={() => {saveToLocal([]); setShowDeleteModal(false);}} className="py-3 rounded-xl bg-red-600 text-white font-black uppercase text-[10px]">Sim</button>
+                                    <button onClick={() => setShowDeleteModal(false)} className="py-3.5 rounded-xl bg-slate-100 text-slate-600 font-black uppercase text-[10px] transition-all hover:bg-slate-200 tracking-widest">Manter</button>
+                                    <button onClick={() => {saveToLocal([]); setShowDeleteModal(false);}} className="py-3.5 rounded-xl bg-red-600 text-white font-black uppercase text-[10px] transition-all hover:bg-red-700 shadow-lg tracking-widest">Sim, Limpar</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* CONTAINER DE EXPORTAÇÃO (ESCONDIDO) */}
+                    {/* CONTAINER DE EXPORTAÇÃO */}
                     {showExportTemplate && (
                         <div id="export-container" ref={reportRef}>
-                            <div className="p-12 bg-white">
-                                <div className="flex justify-between items-end mb-12 border-b-2 border-slate-900 pb-8">
-                                    <div className="flex items-center gap-6">
-                                        <img src={OASIS_LOGO_URL} alt="Logo" className="h-24" crossOrigin="anonymous" />
-                                        <div>
-                                            <h1 className="text-5xl font-black text-slate-900 uppercase leading-none">Fazenda Oásis</h1>
-                                            <p className="text-lg font-bold text-emerald-600 uppercase tracking-widest mt-2">Relatório de Entrada de Mudas</p>
-                                        </div>
+                            <div className="bg-[#062C1B] p-10 flex justify-between items-center text-white border-b-4 border-emerald-500">
+                                <div className="flex items-center gap-6">
+                                    <img src={OASIS_LOGO_URL} alt="Logo" className="h-24" crossOrigin="anonymous" />
+                                    <div className="flex flex-col">
+                                        <h1 className="text-4xl font-black uppercase leading-none tracking-tighter">Fazenda Oásis</h1>
+                                        <p className="text-sm font-bold text-emerald-400 uppercase tracking-widest mt-2">Relatório de Chegada de Mudas</p>
                                     </div>
-                                    <p className="text-3xl font-black text-slate-900">{new Date().toLocaleDateString('pt-BR')}</p>
                                 </div>
+                                <div className="text-center flex flex-col items-center">
+                                    <SvgIcon name="truck" className="w-12 h-12 text-emerald-400 mb-2" />
+                                    <p className="text-xs font-black text-emerald-500 uppercase tracking-widest mb-1">Emissão</p>
+                                    <p className="text-2xl font-black">{new Date().toLocaleDateString('pt-BR')}</p>
+                                </div>
+                            </div>
 
-                                <div className="bg-[#DCFCE7] p-10 rounded-[2.5rem] flex items-center justify-around mb-12 border-2 border-[#BBF7D0]">
+                            <div className="p-8 bg-white">
+                                {/* FLASH CARD UNIFICADO NA EXPORTAÇÃO - LIMPO */}
+                                <div className="stats-flash-card grid grid-cols-3 gap-10 p-10 rounded-[2.5rem] mb-10 shadow-sm border-none">
                                     <div className="text-center">
-                                        <div className="flex items-center gap-2 mb-2 justify-center">
-                                            <SvgIcon name="grid" className="w-5 h-5 text-emerald-600" />
-                                            <p className="text-xs font-black text-emerald-600 uppercase tracking-widest">Total Blocos</p>
-                                        </div>
-                                        <p className="text-5xl font-black text-emerald-950">{stats.totalBlocos}</p>
+                                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1.5">Blocos</p>
+                                        <p className="text-4xl font-black text-emerald-950">{stats.totalBlocos}</p>
                                     </div>
-                                    <div className="w-px h-16 bg-emerald-200"></div>
-                                    <div className="text-center">
-                                        <div className="flex items-center gap-2 mb-2 justify-center">
-                                            <SvgIcon name="sprouts" className="w-5 h-5 text-emerald-600" />
-                                            <p className="text-xs font-black text-emerald-600 uppercase tracking-widest">Total Mudas</p>
-                                        </div>
-                                        <p className="text-5xl font-black text-emerald-950">{stats.totalMudas.toLocaleString('pt-BR')}</p>
+                                    <div className="text-center border-x border-emerald-300/30">
+                                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1.5">Total Mudas</p>
+                                        <p className="text-4xl font-black text-emerald-950">{stats.totalMudas.toLocaleString('pt-BR')}</p>
                                     </div>
-                                    <div className="w-px h-16 bg-emerald-200"></div>
                                     <div className="text-center">
-                                        <div className="flex items-center gap-2 mb-2 justify-center">
-                                            <SvgIcon name="layers" className="w-5 h-5 text-emerald-600" />
-                                            <p className="text-xs font-black text-emerald-600 uppercase tracking-widest">Total Bandejas</p>
-                                        </div>
-                                        <p className="text-5xl font-black text-emerald-950">{stats.totalBandejas.toLocaleString('pt-BR')}</p>
+                                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1.5">Bandejas</p>
+                                        <p className="text-4xl font-black text-emerald-950">{stats.totalBandejas.toLocaleString('pt-BR')}</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-8">
                                     {sortedBlocos.map(b => (
-                                        <div key={b.id} className="border border-slate-200 rounded-[2rem] overflow-hidden">
+                                        <div key={b.id} className="border-2 border-slate-50 rounded-[2.5rem] overflow-hidden">
                                             <div className="bg-slate-900 p-6 flex justify-between items-center text-white">
                                                 <div className="flex items-center gap-4">
-                                                    <SvgIcon name="truck" className="w-10 h-10 text-emerald-400" />
-                                                    <h2 className="text-3xl font-black uppercase tracking-tight">{b.nome}</h2>
+                                                    <SvgIcon name="truck" className="w-8 h-8 text-emerald-400" />
+                                                    <h2 className="text-3xl font-black uppercase tracking-tighter">{b.nome}</h2>
                                                 </div>
-                                                <p className="text-2xl font-black">{(b.variedades.reduce((acc,v) => acc + v.bandejas, 0) * 200).toLocaleString('pt-BR')} Mudas</p>
+                                                <p className="text-2xl font-black text-emerald-400">{(b.variedades.reduce((acc,v) => acc + v.bandejas, 0) * 200).toLocaleString('pt-BR')} Mudas</p>
                                             </div>
-                                            <table className="w-full text-left">
-                                                <thead className="bg-slate-50">
-                                                    <tr>
-                                                        <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Variedade</th>
-                                                        <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Bandejas</th>
-                                                        <th className="p-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Total Mudas</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100">
-                                                    {b.variedades.map(v => (
-                                                        <tr key={v.id}>
-                                                            <td className="p-6">
-                                                                <p className="text-2xl font-black text-slate-900 uppercase">{v.nome}</p>
-                                                                <div className="flex gap-4 mt-1">
-                                                                    <p className="text-[10px] font-black text-orange-600 uppercase">Chegada: {v.dataChegada.split('-').reverse().join('/')}</p>
-                                                                    {v.dataGerminacao && (
-                                                                        <p className="text-[10px] font-black text-emerald-600 uppercase">Germinação: {v.dataGerminacao.split('-').reverse().join('/')}</p>
-                                                                    )}
+                                            <div className="p-4 space-y-3">
+                                                {b.variedades.map(v => (
+                                                    <div key={v.id} className="flex justify-between items-center p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                                                        <div>
+                                                            <p className="text-xl font-black text-slate-900 uppercase mb-2">{v.nome}</p>
+                                                            <div className="flex gap-4">
+                                                                <div className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-lg border border-slate-100">
+                                                                    <SvgIcon name="truck" className="w-3.5 h-3.5 text-orange-600" />
+                                                                    <p className="text-[10px] font-black text-orange-700 uppercase">CHEGADA: {v.dataChegada.split('-').reverse().join('/')}</p>
                                                                 </div>
-                                                            </td>
-                                                            <td className="p-6 text-center text-3xl font-black text-slate-800">{v.bandejas}</td>
-                                                            <td className="p-6 text-right text-3xl font-black text-emerald-700">{(v.bandejas * 200).toLocaleString('pt-BR')}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+                                                                {v.dataGerminacao && (
+                                                                    <div className="flex items-center gap-1.5 bg-white px-3 py-1 rounded-lg border border-slate-100">
+                                                                        <SvgIcon name="truck" className="w-3.5 h-3.5 text-emerald-600" />
+                                                                        <p className="text-[10px] font-black text-emerald-700 uppercase">GERM.: {v.dataGerminacao.split('-').reverse().join('/')}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-8">
+                                                            <div className="text-center">
+                                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-0.5">Bandejas</p>
+                                                                <p className="text-2xl font-black text-slate-900">{v.bandejas}</p>
+                                                            </div>
+                                                            <div className="w-px h-8 bg-slate-200"></div>
+                                                            <div className="text-center">
+                                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-0.5">Mudas</p>
+                                                                <p className="text-2xl font-black text-emerald-700">{(v.bandejas * 200).toLocaleString('pt-BR')}</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     ))}
+                                </div>
+                                <div className="mt-12 text-center pt-6 border-t border-slate-100">
+                                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">Fazenda Oásis • Qualidade Superior</p>
                                 </div>
                             </div>
                         </div>
