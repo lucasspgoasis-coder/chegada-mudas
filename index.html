@@ -21,24 +21,18 @@
             background-color: #F8FAFC;
         }
         .logo-img { object-fit: contain; }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+        .stats-card {
+            background: #ECFDF5;
+            border: 1px solid #A7F3D0;
         }
-        /* Template de exportação otimizado e profissional */
         #export-container {
             position: absolute;
             left: -9999px;
             top: 0;
             background: white;
-            width: 1000px; /* Largura para alta definição */
+            width: 1000px; 
             display: block !important;
             color: #1e293b;
-        }
-        .export-table-header {
-            background-color: #f8fafc;
-            border-bottom: 2px solid #e2e8f0;
         }
         select {
             appearance: none;
@@ -77,22 +71,38 @@
             "OUTRO..."
         ];
 
+        const getWeekNumber = (d) => {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return weekNo;
+        };
+
         const SvgIcon = ({ name, className = "w-4 h-4" }) => {
             const icons = {
                 trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,
                 edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
                 fileText: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,
-                truck: <><rect x="1" y="3" width="15" height="13"/><polyline points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></>,
-                plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
-                leaf: <><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 21 2c-2.5 4-3 5.5-4.1 11.2A7 7 0 0 1 11 20z"/><path d="M11 20l-5-5"/></>,
-                tag: <><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>,
-                x: <><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>,
-                wifiOff: <><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></>,
+                truck: (
+                    <g fill="currentColor">
+                        <path d="M2 5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2v1a2 2 0 0 0 4 0v-1h7v1a2 2 0 0 0 4 0v-1h2a1 1 0 0 0 1-1v-4l-3-3h-2V6a1 1 0 0 0-1-1H2zm1 2h10v6H3V7zm11 3h2.5l2 2H14v-2z" />
+                        <path d="M5 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm12 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
+                        <path d="M4 6h1v1H4zM6 6h1v1H6zM8 6h1v1H8zM10 6h1v1H10z" />
+                    </g>
+                ),
                 download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
                 alert: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
-                calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>
+                x: <><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>
             };
-            return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name]}</svg>;
+            
+            const isPathOnly = name !== 'truck';
+
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isPathOnly ? "none" : "currentColor"} stroke={isPathOnly ? "currentColor" : "none"} strokeWidth={isPathOnly ? "2.5" : "0"} strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name]}
+                </svg>
+            );
         };
 
         function App() {
@@ -101,7 +111,6 @@
             const [isExporting, setIsExporting] = useState(false);
             const [editingRef, setEditingRef] = useState(null);
             const [showExportTemplate, setShowExportTemplate] = useState(false);
-            const [isOnline, setIsOnline] = useState(navigator.onLine);
             const [showDeleteModal, setShowDeleteModal] = useState(false);
             const reportRef = useRef(null);
 
@@ -117,19 +126,9 @@
             const [formData, setFormData] = useState(initialFormState);
 
             useEffect(() => {
-                const handleOnline = () => setIsOnline(true);
-                const handleOffline = () => setIsOnline(false);
-                window.addEventListener('online', handleOnline);
-                window.addEventListener('offline', handleOffline);
-                
                 const localData = localStorage.getItem('oasis_plantio_blocos_v1');
                 if (localData) setBlocos(JSON.parse(localData));
                 setLoading(false);
-
-                return () => {
-                    window.removeEventListener('online', handleOnline);
-                    window.removeEventListener('offline', handleOffline);
-                };
             }, []);
 
             const saveToLocal = (data) => {
@@ -151,22 +150,18 @@
                 };
             }, [blocos]);
 
-            const cancelEdit = () => {
-                setEditingRef(null);
-                setFormData(initialFormState);
-            };
-
-            const limparTodosOsDados = () => {
-                saveToLocal([]);
-                setShowDeleteModal(false);
-            };
+            const sortedBlocos = useMemo(() => {
+                return [...blocos].sort((a, b) => a.nome.localeCompare(b.nome));
+            }, [blocos]);
 
             const handleSave = (e) => {
                 e.preventDefault();
+                const now = new Date();
                 const bandejasNum = parseInt(formData.bandejas) || 0;
                 const nomeBlocoNorm = formData.nomeBloco;
                 const nomeVariedade = formData.variedade === "OUTRO..." ? formData.variedadeCustom.trim().toUpperCase() : formData.variedade;
                 if (!nomeVariedade) return;
+                
                 let updatedBlocos = [...blocos];
                 const novaVariedade = {
                     id: editingRef ? editingRef.variedadeId : Date.now().toString(),
@@ -174,8 +169,11 @@
                     bandejas: bandejasNum,
                     totalMudas: bandejasNum * 200,
                     dataChegada: formData.dataChegada,
-                    dataGerminacao: formData.dataGerminacao
+                    dataGerminacao: formData.dataGerminacao,
+                    semanaAno: getWeekNumber(new Date(formData.dataChegada)),
+                    horaRegistro: editingRef ? editingRef.horaOriginal : now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
                 };
+
                 if (editingRef) {
                     updatedBlocos = updatedBlocos.map(b => {
                         if (b.id === editingRef.blocoId) {
@@ -189,6 +187,7 @@
                         }
                         return b;
                     }).filter(b => b.variedades.length > 0);
+                    
                     if (editingRef.blocoNome !== nomeBlocoNorm) {
                         const indexDestino = updatedBlocos.findIndex(b => b.nome === nomeBlocoNorm);
                         if (indexDestino !== -1) {
@@ -210,30 +209,6 @@
                 setFormData(initialFormState);
             };
 
-            const deleteVariedade = (blocoId, variedadeId) => {
-                let updated = blocos.map(b => {
-                    if (b.id === blocoId) {
-                        return { ...b, variedades: b.variedades.filter(v => v.id !== variedadeId) };
-                    }
-                    return b;
-                }).filter(b => b.variedades.length > 0);
-                saveToLocal(updated);
-            };
-
-            const startEdit = (bloco, variedade) => {
-                setEditingRef({ blocoId: bloco.id, blocoNome: bloco.nome, variedadeId: variedade.id });
-                const isCustom = !LISTA_VARIEDADES.includes(variedade.nome);
-                setFormData({
-                    nomeBloco: bloco.nome,
-                    variedade: isCustom ? "OUTRO..." : variedade.nome,
-                    variedadeCustom: isCustom ? variedade.nome : '',
-                    bandejas: variedade.bandejas,
-                    dataChegada: variedade.dataChegada,
-                    dataGerminacao: variedade.dataGerminacao || ''
-                });
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            };
-
             const captureReport = async (qualityScale = 2) => {
                 setIsExporting(true);
                 setShowExportTemplate(true);
@@ -252,26 +227,21 @@
             };
 
             const downloadJpegForWhatsapp = async () => {
-                try {
-                    const canvas = await captureReport(3);
-                    const link = document.createElement('a');
-                    const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-                    link.download = `Oasis_Relatorio_${date}.jpg`;
-                    link.href = canvas.toDataURL('image/jpeg', 0.95);
-                    link.click();
-                } catch (e) { console.error(e); }
+                const canvas = await captureReport(3);
+                const link = document.createElement('a');
+                link.download = `Oasis_Relatorio.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
             };
 
             const exportPDF = async () => {
-                try {
-                    const canvas = await captureReport(2.5);
-                    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-                    const imgData = canvas.toDataURL('image/jpeg', 0.98);
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                    pdf.save(`Oasis_Relatorio_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
-                } catch (e) { console.error(e); }
+                const canvas = await captureReport(2.5);
+                const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save(`Oasis_Relatorio.pdf`);
             };
 
             if (loading) return null;
@@ -279,88 +249,78 @@
             return (
                 <div className="min-h-screen flex flex-col bg-[#F1F5F9] pb-20">
                     
-                    {/* CABEÇALHO APP */}
-                    <header className="bg-[#062C1B] text-white p-5 shadow-xl sticky top-0 z-50 border-b-4 border-emerald-500/20">
+                    {/* CABEÇALHO ATUALIZADO */}
+                    <header className="bg-[#062C1B] text-white p-5 shadow-xl sticky top-0 z-50">
                         <div className="max-w-[1500px] mx-auto flex flex-col xl:flex-row justify-between items-center gap-6">
-                            <div className="flex items-center gap-5">
+                            <div className="flex items-center gap-4">
                                 <img src={OASIS_LOGO_URL} alt="Logo" className="h-12 logo-img" crossOrigin="anonymous" />
-                                <div>
-                                    <h1 className="text-2xl font-black uppercase tracking-tighter leading-none mb-1 text-emerald-50">Fazenda Oásis</h1>
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest leading-none">Gestão de Mudas</p>
-                                    </div>
+                                <div className="flex items-center gap-3">
+                                    <h1 className="text-2xl font-black uppercase tracking-tighter text-emerald-50">Fazenda Oásis</h1>
+                                    <SvgIcon name="truck" className="w-8 h-8 text-emerald-400" />
                                 </div>
                             </div>
                             
-                            <div className="flex flex-wrap justify-center gap-4 items-center glass-effect p-3 px-6 rounded-2xl border border-white/10 text-slate-900">
-                                <div className="text-center px-4">
-                                    <p className="text-[8px] font-black text-emerald-700 uppercase mb-0.5 tracking-widest">Total Mudas</p>
-                                    <p className="text-xl font-black">{stats.totalMudas.toLocaleString('pt-BR')}</p>
+                            {/* FLASH CARD ÚNICO VERDE CLARO */}
+                            <div className="flex flex-wrap items-center justify-center gap-6 stats-card p-3 px-8 rounded-full text-emerald-900 shadow-sm border border-emerald-200">
+                                <div className="text-center">
+                                    <p className="text-[8px] font-black text-emerald-600 uppercase mb-0.5 tracking-widest">Total Mudas</p>
+                                    <p className="text-xl font-black leading-none">{stats.totalMudas.toLocaleString('pt-BR')}</p>
                                 </div>
-                                <div className="w-px h-8 bg-slate-200"></div>
-                                <div className="text-center px-4">
-                                    <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5 tracking-widest">Bandejas</p>
-                                    <p className="text-xl font-black">{stats.totalBandejas}</p>
+                                <div className="w-px h-8 bg-emerald-200"></div>
+                                <div className="text-center">
+                                    <p className="text-[8px] font-black text-emerald-600 uppercase mb-0.5 tracking-widest">Bandejas</p>
+                                    <p className="text-xl font-black leading-none">{stats.totalBandejas}</p>
                                 </div>
-                                <div className="flex gap-2 ml-4">
-                                    <button onClick={downloadJpegForWhatsapp} title="Baixar Imagem" className="bg-[#25D366] hover:bg-[#128C7E] text-white p-3 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2" disabled={isExporting}>
-                                        <SvgIcon name="download" />
-                                        <span className="text-[9px] font-black uppercase hidden sm:block">Salvar Imagem</span>
-                                    </button>
-                                    <button onClick={exportPDF} className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-black text-[9px] uppercase flex items-center gap-2 shadow-lg transition-all active:scale-95" disabled={isExporting}>
-                                        <SvgIcon name="fileText" /> {isExporting ? "Gerando..." : "Gerar PDF"}
-                                    </button>
-                                    <button onClick={() => setShowDeleteModal(true)} title="Limpar Tudo" className="bg-white hover:bg-red-50 text-red-500 p-3 rounded-xl shadow-lg border border-slate-200 transition-all active:scale-95">
-                                        <SvgIcon name="trash" />
-                                    </button>
+                                <div className="w-px h-8 bg-emerald-200"></div>
+                                <div className="text-center">
+                                    <p className="text-[8px] font-black text-emerald-600 uppercase mb-0.5 tracking-widest">Blocos Ativos</p>
+                                    <p className="text-xl font-black leading-none">{stats.totalBlocos}</p>
                                 </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button onClick={downloadJpegForWhatsapp} className="bg-[#25D366] hover:bg-[#128C7E] text-white p-3 rounded-2xl shadow-lg flex items-center gap-2 transition-all active:scale-95">
+                                    <SvgIcon name="download" />
+                                    <span className="text-[10px] font-black uppercase hidden sm:block">Salvar Imagem</span>
+                                </button>
+                                <button onClick={exportPDF} className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                                    <SvgIcon name="fileText" /> PDF
+                                </button>
+                                <button onClick={() => setShowDeleteModal(true)} className="bg-white hover:bg-red-50 text-red-500 p-3 rounded-2xl shadow-lg border border-slate-200 transition-all active:scale-95">
+                                    <SvgIcon name="trash" />
+                                </button>
                             </div>
                         </div>
                     </header>
 
-                    {/* MODAL DE LIMPEZA */}
-                    {showDeleteModal && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
-                            <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl text-center">
-                                <div className="bg-red-100 text-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <SvgIcon name="alert" className="w-8 h-8" />
-                                </div>
-                                <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Apagar Registros?</h3>
-                                <p className="text-slate-500 font-medium mb-8">Esta ação removerá todos os dados de plantio salvos localmente.</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button onClick={() => setShowDeleteModal(false)} className="py-4 rounded-2xl bg-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest">Cancelar</button>
-                                    <button onClick={limparTodosOsDados} className="py-4 rounded-2xl bg-red-600 text-white font-black uppercase text-[10px] tracking-widest">Confirmar</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <main className="max-w-[1400px] mx-auto w-full grid lg:grid-cols-[400px_1fr] gap-10 p-6 mt-4">
+                    <main className="max-w-[1400px] mx-auto w-full grid lg:grid-cols-[400px_1fr] gap-10 p-6 mt-8">
                         <aside>
-                            <div className={`bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-200 sticky top-32 transition-all ${editingRef ? 'editing-mode ring-4 ring-emerald-500/20' : ''}`}>
-                                <div className="flex justify-between items-center mb-8">
-                                    <h2 className="text-[10px] font-black uppercase text-emerald-700 tracking-[0.2em] flex items-center gap-2">
-                                        <SvgIcon name={editingRef ? "edit" : "plus"} className="w-4 h-4" /> 
-                                        {editingRef ? "Editar Registro" : "Novo Registro"}
-                                    </h2>
+                            <div className={`bg-white p-8 rounded-[3rem] shadow-xl border border-slate-200 sticky top-32 transition-all ${editingRef ? 'editing-mode ring-4 ring-emerald-500/20' : ''}`}>
+                                <div className="flex justify-between items-center mb-10">
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-emerald-700">
+                                            <SvgIcon name="truck" className="w-10 h-10" />
+                                        </div>
+                                        <h2 className="text-[12px] font-black uppercase text-emerald-900 tracking-wider">
+                                            {editingRef ? "Editar" : "Novo"} Registro
+                                        </h2>
+                                    </div>
                                     {editingRef && (
-                                        <button onClick={cancelEdit} className="text-red-500 hover:bg-red-50 p-2 rounded-lg flex items-center gap-1 text-[9px] font-black uppercase">
-                                            <SvgIcon name="x" className="w-3 h-3" /> Cancelar
-                                        </button>
+                                        <button onClick={() => {setEditingRef(null); setFormData(initialFormState);}} className="text-red-500 text-[10px] font-black uppercase">Cancelar</button>
                                     )}
                                 </div>
 
                                 <form onSubmit={handleSave} className="space-y-6">
                                     <div>
                                         <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block tracking-widest">Localização / Bloco</label>
-                                        <select required value={formData.nomeBloco} onChange={e => setFormData({...formData, nomeBloco: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-lg outline-none cursor-pointer">
+                                        <select required value={formData.nomeBloco} onChange={e => setFormData({...formData, nomeBloco: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-black text-lg">
                                             {LISTA_BLOCOS.map(bloco => (<option key={bloco} value={bloco}>{bloco}</option>))}
                                         </select>
                                     </div>
 
                                     <div>
                                         <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block tracking-widest">Variedade de Semente</label>
-                                        <select required value={formData.variedade} onChange={e => setFormData({...formData, variedade: e.target.value})} className="w-full p-4 bg-amber-50 border border-amber-100 rounded-2xl font-black text-lg text-amber-900 mb-3 cursor-pointer">
+                                        <select required value={formData.variedade} onChange={e => setFormData({...formData, variedade: e.target.value})} className="w-full p-4 bg-amber-50 border border-amber-100 rounded-2xl font-black text-lg text-amber-900 mb-3">
                                             {LISTA_VARIEDADES.map(v => (<option key={v} value={v}>{v}</option>))}
                                         </select>
                                         {formData.variedade === "OUTRO..." && (
@@ -382,192 +342,180 @@
                                     <div>
                                         <label className="text-[9px] font-black text-slate-400 uppercase ml-1 mb-2 block tracking-widest text-center">Nº de Bandejas</label>
                                         <div className="relative">
-                                            <input type="number" required placeholder="0" value={formData.bandejas} onChange={e => setFormData({...formData, bandejas: e.target.value})} className="w-full p-6 bg-emerald-50 border border-emerald-100 rounded-[2rem] font-black text-4xl text-center text-emerald-900 outline-none" />
+                                            <input type="number" required placeholder="0" value={formData.bandejas} onChange={e => setFormData({...formData, bandejas: e.target.value})} className="w-full p-8 bg-emerald-50 border border-emerald-100 rounded-[2.5rem] font-black text-5xl text-center text-emerald-900 outline-none" />
                                             <div className="absolute inset-x-0 -bottom-4 flex justify-center">
-                                                <div className="bg-emerald-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 uppercase">
-                                                    {(parseInt(formData.bandejas) || 0) * 200} MUDAS ESTIMADAS
+                                                <div className="bg-emerald-600 text-white text-[10px] font-black px-4 py-2 rounded-full shadow-lg uppercase">
+                                                    {(parseInt(formData.bandejas) || 0) * 200} MUDAS
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <button type="submit" className={`w-full mt-8 text-white font-black py-5 rounded-2xl shadow-xl uppercase text-[11px] flex items-center justify-center gap-3 transition-all active:scale-95 ${editingRef ? 'bg-emerald-600' : 'bg-[#062C1B]'}`}>
-                                        <SvgIcon name={editingRef ? "edit" : "plus"} /> {editingRef ? "Salvar Alterações" : "Adicionar ao Registro"}
+                                    <button type="submit" className={`w-full mt-10 text-white font-black py-5 rounded-2xl shadow-xl uppercase text-[11px] flex items-center justify-center gap-3 transition-all active:scale-95 ${editingRef ? 'bg-emerald-600' : 'bg-[#062C1B]'}`}>
+                                        <SvgIcon name="truck" className="w-7 h-7" /> {editingRef ? "Salvar Alterações" : "Registrar Carga de Mudas"}
                                     </button>
                                 </form>
                             </div>
                         </aside>
 
-                        <section className="space-y-6">
-                            {blocos.length === 0 ? (
-                                <div className="bg-white rounded-[3rem] border-2 border-dashed border-slate-200 p-24 text-center">
-                                    <SvgIcon name="leaf" className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                                    <p className="text-slate-300 font-black uppercase text-xs tracking-widest">Sem registros ativos na fazenda</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-8">
-                                    {blocos.map(bloco => {
-                                        const blocoBandejas = bloco.variedades.reduce((a,v) => a + v.bandejas, 0);
-                                        return (
-                                            <div key={bloco.id} className="bg-white rounded-[2.5rem] shadow-xl border border-slate-200 overflow-hidden">
-                                                <div className="bg-slate-50 px-8 py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="bg-[#062C1B] text-white p-3 rounded-2xl shadow-lg"><SvgIcon name="leaf" className="w-5 h-5" /></div>
-                                                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">{bloco.nome}</h3>
+                        <section className="space-y-10">
+                            {sortedBlocos.map(bloco => (
+                                <div key={bloco.id} className="bg-white rounded-[3rem] shadow-xl border border-slate-200 overflow-hidden relative">
+                                    <div className="bg-slate-50 px-10 py-8 border-b border-slate-100 flex justify-between items-center">
+                                        <div className="flex items-center gap-5">
+                                            <div className="text-[#062C1B]">
+                                                <SvgIcon name="truck" className="w-12 h-12" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">{bloco.nome}</h3>
+                                                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Local Organizado</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total no Bloco</p>
+                                            <p className="font-black text-emerald-800 text-3xl">{(bloco.variedades.reduce((a,v) => a + v.bandejas, 0) * 200).toLocaleString('pt-BR')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="p-6 space-y-4">
+                                        {bloco.variedades.map(v => (
+                                            <div key={v.id} className="flex flex-col md:flex-row items-center justify-between p-8 rounded-[2rem] bg-white border border-slate-100 hover:border-emerald-200 transition-colors group relative">
+                                                <div className="absolute top-5 right-8 flex items-center gap-2">
+                                                    <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-3 py-1 rounded-lg border border-emerald-100">
+                                                        SEM {v.semanaAno}
+                                                    </span>
+                                                    <span className="bg-slate-50 text-slate-400 text-[9px] font-black px-3 py-1 rounded-lg border border-slate-100">
+                                                        REG {v.horaRegistro}
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-6">
+                                                    <div className="text-slate-300 group-hover:text-emerald-500 transition-colors">
+                                                        <SvgIcon name="truck" className="w-10 h-10" />
                                                     </div>
-                                                    <div className="flex items-center gap-4 bg-white px-5 py-2 rounded-2xl border border-slate-200">
-                                                        <div className="text-right">
-                                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total do Bloco</p>
-                                                            <p className="font-black text-emerald-800 text-xl">{(blocoBandejas * 200).toLocaleString('pt-BR')} <span className="text-[10px] text-slate-400">mudas</span></p>
+                                                    <div>
+                                                        <p className="font-black text-slate-900 uppercase text-xl mb-1">{v.nome}</p>
+                                                        <div className="flex gap-4 text-[11px] font-bold text-slate-400 uppercase">
+                                                            <span>Chegada: {v.dataChegada.split('-').reverse().join('/')}</span>
+                                                            {v.dataGerminacao && <span className="text-emerald-600">Germinação: {v.dataGerminacao.split('-').reverse().join('/')}</span>}
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="p-4 space-y-3">
-                                                    {bloco.variedades.map(v => (
-                                                        <div key={v.id} className="flex flex-col md:flex-row items-center justify-between p-6 rounded-3xl bg-white border border-slate-100 hover:border-emerald-200 transition-colors group">
-                                                            <div className="flex items-center gap-5">
-                                                                <div className="p-3 rounded-xl bg-slate-50 text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors"><SvgIcon name="tag" /></div>
-                                                                <div>
-                                                                    <p className="font-black text-slate-800 uppercase text-base mb-1">{v.nome}</p>
-                                                                    <div className="flex gap-4 text-[10px] font-bold text-slate-400 uppercase">
-                                                                        <span className="flex items-center gap-1"><SvgIcon name="calendar" className="w-2.5 h-2.5" /> {v.dataChegada.split('-').reverse().join('/')}</span>
-                                                                        {v.dataGerminacao && <span className="text-emerald-600 flex items-center gap-1 font-black underline decoration-emerald-200">GERM: {v.dataGerminacao.split('-').reverse().join('/')}</span>}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-6 mt-4 md:mt-0">
-                                                                <div className="text-right">
-                                                                    <p className="text-2xl font-black text-slate-900 leading-none">{(v.bandejas * 200).toLocaleString('pt-BR')}</p>
-                                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{v.bandejas} Band.</p>
-                                                                </div>
-                                                                <div className="flex gap-2">
-                                                                    <button onClick={() => startEdit(bloco, v)} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"><SvgIcon name="edit" /></button>
-                                                                    <button onClick={() => deleteVariedade(bloco.id, v.id)} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"><SvgIcon name="trash" /></button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
+                                                
+                                                {/* REINTRODUÇÃO DO TOTAL DE MUDAS NO REGISTRO */}
+                                                <div className="flex items-center gap-10 mt-6 md:mt-0">
+                                                    <div className="text-center">
+                                                        <p className="text-4xl font-black text-emerald-700">{(v.bandejas * 200).toLocaleString('pt-BR')}</p>
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mudas Totais</p>
+                                                        <p className="text-[12px] font-bold text-slate-900 mt-1">{v.bandejas} BANDEJAS</p>
+                                                    </div>
+                                                    <div className="flex gap-3">
+                                                        <button onClick={() => {
+                                                            setEditingRef({ blocoId: bloco.id, blocoNome: bloco.nome, variedadeId: v.id, horaOriginal: v.horaRegistro });
+                                                            const isCustom = !LISTA_VARIEDADES.includes(v.nome);
+                                                            setFormData({
+                                                                nomeBloco: bloco.nome,
+                                                                variedade: isCustom ? "OUTRO..." : v.nome,
+                                                                variedadeCustom: isCustom ? v.nome : '',
+                                                                bandejas: v.bandejas,
+                                                                dataChegada: v.dataChegada,
+                                                                dataGerminacao: v.dataGerminacao || ''
+                                                            });
+                                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                        }} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all shadow-sm"><SvgIcon name="edit" /></button>
+                                                        <button onClick={() => {
+                                                            const updated = blocos.map(b => b.id === bloco.id ? { ...b, variedades: b.variedades.filter(vari => vari.id !== v.id) } : b).filter(b => b.variedades.length > 0);
+                                                            saveToLocal(updated);
+                                                        }} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-red-600 hover:text-white transition-all shadow-sm"><SvgIcon name="trash" /></button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        );
-                                    })}
+                                        ))}
+                                    </div>
                                 </div>
-                            )}
+                            ))}
                         </section>
                     </main>
 
-                    {/* TEMPLATE DE EXPORTAÇÃO PROFISSIONAL (MELHORADO) */}
+                    {showDeleteModal && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+                            <div className="bg-white rounded-[3rem] p-10 max-w-md w-full text-center shadow-2xl">
+                                <div className="text-red-500 mb-6 flex justify-center"><SvgIcon name="alert" className="w-16 h-16" /></div>
+                                <h3 className="text-3xl font-black text-slate-900 uppercase mb-4 tracking-tighter">Limpar registros?</h3>
+                                <p className="text-slate-500 mb-10 font-medium">Todos os dados de plantio serão apagados definitivamente.</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button onClick={() => setShowDeleteModal(false)} className="py-4 rounded-2xl bg-slate-100 text-slate-600 font-black uppercase text-[10px]">Cancelar</button>
+                                    <button onClick={() => {saveToLocal([]); setShowDeleteModal(false);}} className="py-4 rounded-2xl bg-red-600 text-white font-black uppercase text-[10px]">Apagar tudo</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {showExportTemplate && (
                         <div id="export-container" ref={reportRef} className="font-sans">
-                            <div className="p-12 bg-white">
-                                {/* Header Corporativo com ajustes de espaçamento */}
-                                <div className="flex justify-between items-start mb-14 border-b-2 border-slate-900 pb-10">
+                            <div className="p-16 bg-white">
+                                <div className="flex justify-between items-center mb-16 border-b-4 border-slate-900 pb-12">
                                     <div className="flex items-center gap-10">
-                                        <img src={OASIS_LOGO_URL} alt="Logo" className="h-32 logo-img" crossOrigin="anonymous" />
-                                        <div>
-                                            <h1 className="text-6xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-6">Fazenda Oásis</h1>
-                                            <div className="flex items-center gap-4 mt-2">
-                                                <span className="bg-slate-900 text-white text-[11px] font-black px-4 py-1.5 rounded uppercase tracking-[0.25em]">Relatório Interno</span>
-                                                <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">Controle de Plantio e Germinação</span>
-                                            </div>
+                                        <img src={OASIS_LOGO_URL} alt="Logo" className="h-28 logo-img" crossOrigin="anonymous" />
+                                        <div className="flex items-center gap-6">
+                                            <h1 className="text-6xl font-black text-slate-900 uppercase tracking-tighter">Fazenda Oásis</h1>
+                                            <SvgIcon name="truck" className="w-20 h-20 text-emerald-600" />
                                         </div>
                                     </div>
-                                    <div className="text-right pt-2">
-                                        <p className="text-slate-400 text-[11px] font-black uppercase tracking-widest mb-1">Data de Emissão</p>
-                                        <p className="text-4xl font-black text-slate-900">{new Date().toLocaleDateString('pt-BR')}</p>
-                                        <p className="text-[11px] font-bold text-slate-400 mt-2 uppercase italic">Documento Digital Oasis V1.0</p>
+                                    <div className="text-right">
+                                        <p className="text-5xl font-black text-slate-900">{new Date().toLocaleDateString('pt-BR')}</p>
+                                        <p className="text-sm font-black text-emerald-600 uppercase mt-2 tracking-widest">Relatório Consolidado de Produção</p>
                                     </div>
                                 </div>
 
-                                {/* Painel de Indicadores */}
-                                <div className="grid grid-cols-3 gap-8 mb-16">
-                                    <div className="bg-slate-50 border border-slate-200 p-10 rounded-[2.5rem] flex flex-col items-center justify-center text-center shadow-sm">
-                                        <p className="text-[11px] font-black text-slate-400 uppercase mb-4 tracking-[0.3em]">Volume Total Mudas</p>
-                                        <p className="text-7xl font-black text-slate-900 leading-none">{stats.totalMudas.toLocaleString('pt-BR')}</p>
-                                        <div className="w-16 h-2 bg-emerald-500 rounded-full mt-6"></div>
+                                <div className="grid grid-cols-3 gap-10 mb-20">
+                                    <div className="bg-[#ECFDF5] p-12 rounded-[3rem] text-center border border-[#A7F3D0]">
+                                        <p className="text-[12px] font-black text-emerald-600 uppercase tracking-[0.4em] mb-4">Volume Mudas</p>
+                                        <p className="text-7xl font-black text-emerald-900">{stats.totalMudas.toLocaleString('pt-BR')}</p>
                                     </div>
-                                    <div className="bg-slate-50 border border-slate-200 p-10 rounded-[2.5rem] flex flex-col items-center justify-center text-center shadow-sm">
-                                        <p className="text-[11px] font-black text-slate-400 uppercase mb-4 tracking-[0.3em]">Total de Bandejas</p>
-                                        <p className="text-7xl font-black text-slate-900 leading-none">{stats.totalBandejas}</p>
-                                        <div className="w-16 h-2 bg-slate-300 rounded-full mt-6"></div>
+                                    <div className="bg-[#ECFDF5] p-12 rounded-[3rem] text-center border border-[#A7F3D0]">
+                                        <p className="text-[12px] font-black text-emerald-600 uppercase tracking-[0.4em] mb-4">Bandejas</p>
+                                        <p className="text-7xl font-black text-emerald-900">{stats.totalBandejas}</p>
                                     </div>
-                                    <div className="bg-[#062C1B] p-10 rounded-[2.5rem] flex flex-col items-center justify-center text-center shadow-2xl">
-                                        <p className="text-[11px] font-black text-emerald-400 uppercase mb-4 tracking-[0.3em]">Área de Plantio</p>
-                                        <p className="text-7xl font-black text-white leading-none">{stats.totalBlocos}</p>
-                                        <p className="text-[11px] font-black text-white uppercase mt-4 tracking-widest">Blocos Ativos</p>
+                                    <div className="bg-[#062C1B] p-12 rounded-[3rem] text-center shadow-2xl">
+                                        <p className="text-[12px] font-black text-emerald-400 uppercase tracking-[0.4em] mb-4">Blocos Ativos</p>
+                                        <p className="text-7xl font-black text-white">{stats.totalBlocos}</p>
                                     </div>
                                 </div>
 
-                                {/* Listagem Técnica (Tabelada com fontes maiores) */}
                                 <div className="space-y-12">
-                                    {blocos.map(b => (
-                                        <div key={b.id} className="overflow-hidden border border-slate-200 rounded-[2.5rem] bg-white shadow-sm">
-                                            <div className="bg-slate-900 px-10 py-6 flex justify-between items-center">
-                                                <h2 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-4">
-                                                    <span className="w-2.5 h-10 bg-emerald-500 rounded-full"></span>
-                                                    {b.nome}
-                                                </h2>
-                                                <div className="text-right">
-                                                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-0.5">Subtotal Mudas</span>
-                                                    <span className="text-2xl font-black text-white">{(b.variedades.reduce((acc,v) => acc + v.bandejas, 0) * 200).toLocaleString('pt-BR')}</span>
-                                                </div>
+                                    {sortedBlocos.map(b => (
+                                        <div key={b.id} className="border-2 border-slate-100 rounded-[3rem] overflow-hidden">
+                                            <div className="bg-slate-900 p-10 flex justify-between items-center">
+                                                <h2 className="text-4xl font-black text-white uppercase tracking-tighter">{b.nome}</h2>
+                                                <p className="text-2xl font-black text-emerald-400">{(b.variedades.reduce((acc,v) => acc + v.bandejas, 0) * 200).toLocaleString('pt-BR')} MUDAS</p>
                                             </div>
-                                            
-                                            <table className="w-full text-left border-collapse">
-                                                <thead className="export-table-header">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-slate-50">
                                                     <tr>
-                                                        <th className="px-10 py-5 text-[11px] font-black text-slate-500 uppercase tracking-widest">Variedade / Cultura</th>
-                                                        <th className="px-8 py-5 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Datas (C/G)</th>
-                                                        <th className="px-8 py-5 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center">Bandejas</th>
-                                                        <th className="px-10 py-5 text-[11px] font-black text-slate-500 uppercase tracking-widest text-right">Total Mudas</th>
+                                                        <th className="p-8 text-[12px] font-black text-slate-400 uppercase tracking-widest">Variedade</th>
+                                                        <th className="p-8 text-[12px] font-black text-slate-400 uppercase tracking-widest">Controle</th>
+                                                        <th className="p-8 text-[12px] font-black text-slate-400 uppercase tracking-widest text-center">Bandejas</th>
+                                                        <th className="p-8 text-[12px] font-black text-slate-400 uppercase tracking-widest text-right">Total Mudas</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody>
-                                                    {b.variedades.map((v, idx) => (
-                                                        <tr key={v.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-                                                            <td className="px-10 py-8">
-                                                                <p className="text-xl font-black text-slate-900 uppercase">{v.nome}</p>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {b.variedades.map(v => (
+                                                        <tr key={v.id}>
+                                                            <td className="p-8">
+                                                                <p className="text-2xl font-black text-slate-900 uppercase">{v.nome}</p>
                                                             </td>
-                                                            <td className="px-8 py-8 text-center">
-                                                                <div className="flex flex-col items-center">
-                                                                    {/* FONTE AUMENTADA NAS DATAS */}
-                                                                    <span className="text-base font-bold text-slate-700">Cheg: {v.dataChegada.split('-').reverse().join('/')}</span>
-                                                                    {v.dataGerminacao && (
-                                                                        <span className="text-sm font-black text-emerald-600 mt-2 uppercase bg-emerald-50 px-3 py-1 rounded-lg">Germ: {v.dataGerminacao.split('-').reverse().join('/')}</span>
-                                                                    )}
-                                                                </div>
+                                                            <td className="p-8">
+                                                                <p className="text-sm font-bold text-slate-400">Chegada: {v.dataChegada.split('-').reverse().join('/')}</p>
+                                                                <p className="text-[10px] font-black text-emerald-600 mt-1 uppercase">Semana {v.semanaAno} | Reg {v.horaRegistro}</p>
                                                             </td>
-                                                            <td className="px-8 py-8 text-center">
-                                                                <p className="text-3xl font-black text-slate-800">{v.bandejas}</p>
-                                                            </td>
-                                                            <td className="px-10 py-8 text-right">
-                                                                <p className="text-4xl font-black text-emerald-700">{(v.bandejas * 200).toLocaleString('pt-BR')}</p>
-                                                            </td>
+                                                            <td className="p-8 text-center"><p className="text-4xl font-black text-slate-900">{v.bandejas}</p></td>
+                                                            <td className="p-8 text-right"><p className="text-4xl font-black text-emerald-700">{(v.bandejas * 200).toLocaleString('pt-BR')}</p></td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
                                             </table>
                                         </div>
                                     ))}
-                                </div>
-
-                                {/* Rodapé */}
-                                <div className="mt-24 flex justify-between items-center border-t-2 border-slate-100 pt-12">
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-16 h-16 rounded-full border-4 border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
-                                            <SvgIcon name="leaf" className="w-8 h-8" />
-                                        </div>
-                                        <div>
-                                            <p className="text-lg font-black text-slate-900 uppercase tracking-tighter">Fazenda Oásis</p>
-                                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Gestão de Produção Agrícola Profissional</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.5em] mb-3">Autenticidade Garantida</p>
-                                        <div className="flex gap-3 justify-end">
-                                            {[1,2,3,4,5].map(i => <div key={i} className="w-8 h-1.5 bg-slate-100 rounded-full"></div>)}
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
