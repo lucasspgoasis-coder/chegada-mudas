@@ -1,104 +1,688 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fazenda Oásis - Gestão de Plantio</title>
-    
+    <title>Registro de Chegada de Mudas - Fazenda Óasis</title>
+    <!-- Tailwind CSS para Estilização -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js" crossorigin></script>
-    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.10/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <!-- Bibliotecas para exportação de PDF e Imagem -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     
+    <!-- Configuração de Tema Tailwind Personalizado -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        farm: {
+                            50: '#f4fbf7',
+                            100: '#e1f5eb',
+                            200: '#c2ebd5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        body { 
-            font-family: 'Inter', sans-serif; 
-            letter-spacing: -0.015em;
-            background-color: #F8FAFC;
-            margin: 0;
-            padding: 0;
-            color: #0f172a;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Transições suaves e efeitos de foco aprimorados */
+        input, select, button {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .premium-shadow {
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+        
+        /* Animações para Toasts */
+        @keyframes slideIn {
+            from { transform: translateY(-1rem); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-        .field-shadow {
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
-        }
-        #export-container {
-            position: absolute;
-            left: -9999px;
-            top: 0;
-            background: white;
-            width: 900px;
-            min-height: 1200px;
-            padding: 60px 70px;
-            box-sizing: border-box;
-            display: block !important;
-        }
-        select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-            background-size: 1.1em;
-        }
-        @keyframes pulse-border {
-            0% { border-color: rgba(16, 185, 129, 0.2); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); }
-            50% { border-color: rgba(16, 185, 129, 0.8); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.05); }
-            100% { border-color: rgba(16, 185, 129, 0.2); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); }
-        }
-        .editing-mode {
-            animation: pulse-border 2.5s infinite;
+        .animate-slide-in {
+            animation: slideIn 0.3s forwards ease-out;
         }
     </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="bg-gradient-to-br from-farm-50 to-slate-100 text-slate-800 min-h-screen p-4 md:p-8 font-sans">
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+    <!-- Notificação Toast Flutuante -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
-        const OASIS_LOGO_URL = "https://i.imgur.com/wEozr34.png";
+    <!-- Modal de Confirmação Customizado (Substitui confirm padrão) -->
+    <div id="customModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl border border-slate-100 transform scale-95 transition-transform duration-300" id="modalBox">
+            <div class="flex items-center gap-3 text-red-600 mb-4">
+                <div class="p-2 bg-red-50 rounded-full">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <h4 class="font-bold text-lg text-slate-900">Excluir Registro</h4>
+            </div>
+            <p class="text-slate-600 mb-6 text-sm">Tem certeza de que deseja excluir permanentemente este registro de muda? Esta ação não pode ser desfeita.</p>
+            <div class="flex justify-end gap-3">
+                <button id="btnCancelModal" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 font-medium text-sm">Cancelar</button>
+                <button id="btnConfirmModal" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm shadow-sm shadow-red-100">Excluir</button>
+            </div>
+        </div>
+    </div>
 
-        const LISTA_BLOCOS = Array.from({ length: 15 }, (_, i) => `BLOCO ${String(i + 1).padStart(2, '0')}`);
+    <!-- Container Principal -->
+    <div class="max-w-6xl mx-auto space-y-8">
         
-        const LISTA_VARIEDADES = [
-            "BRAGANTINO F1",
-            "BRO 68 SYNGENTA",
-            "CLARAMONT",
-            "MASTER TSV",
-            "PHARLAP",
-            "SAKATA JIRAYA F1",
-            "OUTRO..."
-        ];
+        <!-- Cabeçalho Principal -->
+        <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4 text-left">
+                <img src="https://i.imgur.com/wEozr34.png" alt="Logo Fazenda Óasis" class="h-20 w-auto object-contain" onerror="this.src='https://placehold.co/100x100/10b981/ffffff?text=OASIS'">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-farm-900 tracking-tight">
+                        Registro de Chegada de Mudas
+                    </h1>
+                    <h2 class="text-lg text-farm-600 font-semibold tracking-wide flex items-center gap-1.5 mt-0.5">
+                        <span class="w-2 h-2 rounded-full bg-farm-500 inline-block animate-pulse"></span>
+                        Fazenda Óasis
+                    </h2>
+                </div>
+            </div>
+            <div class="text-xs text-right text-slate-400 hidden md:block border-l pl-6 border-slate-100">
+                <p>Módulo de Controle Agrícola</p>
+                <p class="font-medium text-slate-500 mt-1" id="liveDate"></p>
+            </div>
+        </header>
 
-        const LISTA_CULTURAS = [
-            "BRÓCOLIS",
-            "COUVE-FLOR",
-            "OUTROS..."
-        ];
+        <!-- Formulário de Registro -->
+        <main class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="border-b border-slate-50 px-6 py-4 bg-slate-50/50 flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-5 h-5 text-farm-600"></i>
+                <h3 class="font-semibold text-slate-700 text-sm tracking-wider uppercase">Ficha de Entrada de Germinação</h3>
+            </div>
+            
+            <form id="registroForm" class="p-6 space-y-6">
+                <!-- Seção 1: Classificação -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    <!-- Bloco -->
+                    <div class="flex flex-col space-y-1.5">
+                        <label class="font-semibold text-xs text-slate-500 uppercase tracking-wider">Bloco de Destino</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i data-lucide="grid" class="w-5 h-5"></i>
+                            </span>
+                            <select id="blocoSelect" class="w-full pl-10 pr-3 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-farm-500/10 focus:border-farm-500 outline-none font-medium text-slate-700 text-sm appearance-none cursor-pointer" required onchange="toggleOutro('bloco')">
+                                <option value="" disabled selected>Selecione o bloco...</option>
+                                <option value="01">Bloco 01</option>
+                                <option value="02">Bloco 02</option>
+                                <option value="03">Bloco 03</option>
+                                <option value="04">Bloco 04</option>
+                                <option value="05">Bloco 05</option>
+                                <option value="06">Bloco 06</option>
+                                <option value="07">Bloco 07</option>
+                                <option value="08">Bloco 08</option>
+                                <option value="09">Bloco 09</option>
+                                <option value="10">Bloco 10</option>
+                                <option value="outro">Outro Bloco (Digitar)</option>
+                            </select>
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </span>
+                        </div>
+                        <input type="text" id="blocoOutro" class="hidden p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-farm-500/10 focus:border-farm-500 outline-none text-sm font-medium" placeholder="Digite o nome do novo bloco">
+                    </div>
 
-        const getWeekNumber = (d) => {
-            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        };
+                    <!-- Cultura -->
+                    <div class="flex flex-col space-y-1.5">
+                        <label class="font-semibold text-xs text-slate-500 uppercase tracking-wider">Cultura</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i data-lucide="sprout" class="w-5 h-5"></i>
+                            </span>
+                            <select id="culturaSelect" class="w-full pl-10 pr-3 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-farm-500/10 focus:border-farm-500 outline-none font-medium text-slate-700 text-sm appearance-none cursor-pointer" required onchange="toggleOutro('cultura')">
+                                <option value="" disabled selected>Selecione a cultura...</option>
+                                <option value="Brócolis">Brócolis</option>
+                                <option value="Couve Flor">Couve Flor</option>
+                                <option value="outro">Outra Cultura (Digitar)</option>
+                            </select>
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </span>
+                        </div>
+                        <input type="text" id="culturaOutro" class="hidden p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-farm-500/10 focus:border-farm-500 outline-none text-sm font-medium" placeholder="Digite o nome da nova cultura">
+                    </div>
 
-        const SvgIcon = ({ name, className = "w-4 h-4" }) => {
-            const icons = {
-                trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></>,
-                edit: <><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
-                fileText: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></>,
-                truck: (
-                    <g fill="currentColor">
-                        <path d="M2 5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2v1a2 2 0 0 0 4 0v-1h7v1a2 2 0 0 0 4 0v-1h2a1 1 0 0 0 1-1v-4l-3-3h-2V6a1 1 0 0 0-1-1H2zm1 2h10v6H3V7zm11 3h2.5l2 2H14v-2z" />
-                        <path d="M5 16a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm12 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
-                    </g>
-                ),
-                download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
-                alert: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="
+                    <!-- Variedade -->
+                    <div class="flex flex-col space-y-1.5">
+                        <label class="font-semibold text-xs text-slate-500 uppercase tracking-wider">Variedade de Semente</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i data-lucide="dna" class="w-5 h-5"></i>
+                            </span>
+                            <select id="variedadeSelect" class="w-full pl-10 pr-3 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-farm-500/10 focus:border-farm-500 outline-none font-medium text-slate-700 text-sm appearance-none cursor-pointer" required onchange="toggleOutro('variedade')">
+                                <option value="" disabled selected>Selecione a variedade...</option>
+                                <option value="Syngenta BRO">Syngenta BRO</option>
+                                <option value="TSV Master">TSV Master</option>
+                                <option value="Pharlap">Pharlap</option>
+                                <option value="Jiraya">Jiraya</option>
+                                <option value="outro">Outra Variedade (Digitar)</option>
+                            </select>
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </span>
+                        </div>
+                        <input type="text" id="variedadeOutro" class="hidden p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-farm-500/10 focus:border-farm-500 outline-none text-sm font-medium" placeholder="Digite o nome da nova variedade">
+                    </div>
+                </div>
+
+                <!-- Seção 2: Quantidades -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <!-- Bandejas -->
+                    <div class="flex flex-col space-y-1.5">
+                        <label class="font-semibold text-xs text-slate-500 uppercase tracking-wider">Quantidade de Bandejas</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i data-lucide="layers" class="w-5 h-5"></i>
+                            </span>
+                            <input type="number" min="1" id="bandejas" class="w-full pl-10 pr-3 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-farm-500/10 focus:border-farm-500 outline-none font-medium text-slate-700 text-sm" required oninput="calcularMudas()" placeholder="Ex: 10">
+                        </div>
+                    </div>
+
+                    <!-- Total de Mudas (Automático) -->
+                    <div class="flex flex-col space-y-1.5">
+                        <label class="font-semibold text-xs text-slate-500 uppercase tracking-wider">Total de Mudas (200 por bandeja)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i data-lucide="leaf" class="w-5 h-5"></i>
+                            </span>
+                            <input type="text" id="totalMudas" class="w-full pl-10 pr-3 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-500 font-bold outline-none cursor-not-allowed text-sm" readonly placeholder="Calculado automaticamente...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção 3: Datas e Período -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                    <!-- Data Germinação -->
+                    <div class="flex flex-col space-y-1.5">
+                        <label class="font-semibold text-xs text-slate-500 uppercase tracking-wider">Data de Germinação</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                            </span>
+                            <input type="date" id="dataGerminacao" class="w-full pl-10 pr-3 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-farm-500/10 focus:border-farm-500 outline-none font-medium text-slate-700 text-sm" required onchange="calcularDias()">
+                        </div>
+                    </div>
+
+                    <!-- Data Chegada -->
+                    <div class="flex flex-col space-y-1.5">
+                        <label class="font-semibold text-xs text-slate-500 uppercase tracking-wider">Data de Chegada na Fazenda</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i data-lucide="truck" class="w-5 h-5"></i>
+                            </span>
+                            <input type="date" id="dataChegada" class="w-full pl-10 pr-3 py-3 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:ring-4 focus:ring-farm-500/10 focus:border-farm-500 outline-none font-medium text-slate-700 text-sm" required onchange="calcularDias()">
+                        </div>
+                    </div>
+
+                    <!-- Dias Germinação (Automático) -->
+                    <div class="flex flex-col space-y-1.5">
+                        <label class="font-semibold text-xs text-slate-500 uppercase tracking-wider">Dias Totais de Germinação</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i data-lucide="timer" class="w-5 h-5"></i>
+                            </span>
+                            <input type="text" id="diasGerminacao" class="w-full pl-10 pr-3 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-500 font-bold outline-none cursor-not-allowed text-sm" readonly placeholder="Aguardando datas...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botão de Ação -->
+                <div class="flex justify-end pt-4 border-t border-slate-100">
+                    <button type="submit" class="bg-gradient-to-r from-farm-600 to-farm-700 hover:from-farm-700 hover:to-farm-800 text-white font-bold py-3.5 px-8 rounded-xl shadow-md hover:shadow-lg focus:ring-4 focus:ring-farm-500/20 outline-none flex items-center gap-2 text-sm">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                        Inserir na Lista de Lote
+                    </button>
+                </div>
+            </form>
+        </main>
+
+        <!-- Histórico e Tabela -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            
+            <!-- Barra de Ações do Histórico -->
+            <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center p-6 gap-4 border-b border-slate-100 bg-slate-50/30">
+                <div class="flex items-center gap-3">
+                    <img src="https://i.imgur.com/wEozr34.png" alt="Logo Oasis" class="h-10 w-auto object-contain hidden md:block" onerror="this.style.display='none'">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            Histórico de Lotes Recebidos
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Ordenado automaticamente por classificação de bloco</p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2.5">
+                    <button onclick="exportarJPEG()" class="flex-1 sm:flex-initial bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 py-2.5 px-4 rounded-xl font-semibold transition flex items-center justify-center gap-2 text-xs">
+                        <i data-lucide="image" class="w-4 h-4"></i>
+                        Baixar Imagem (JPEG)
+                    </button>
+                    <button onclick="exportarPDF()" class="flex-1 sm:flex-initial bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-2.5 px-4 rounded-xl font-semibold transition flex items-center justify-center gap-2 text-xs">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        Gerar Relatório (PDF)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Área de Exportação da Tabela -->
+            <div id="areaExportacao" class="bg-white p-6">
+                
+                <!-- Cabeçalho de Exportação (Oculto na tela, visível somente nas mídias exportadas) -->
+                <div id="exportHeader" class="hidden mb-6 border-b border-slate-200 pb-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <img src="https://i.imgur.com/wEozr34.png" alt="Logo Oasis" class="h-20 w-auto object-contain" onerror="this.style.display='none'">
+                            <div>
+                                <h2 class="text-2xl font-bold text-slate-900">Relatório de Chegada de Mudas</h2>
+                                <h3 class="text-base text-farm-600 font-semibold">Fazenda Óasis</h3>
+                            </div>
+                        </div>
+                        <div class="text-right text-xs text-slate-500">
+                            <p id="dataExportacao"></p>
+                            <p class="mt-1">Relatório Oficial de Controle de Produção</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela Principal Estilizada -->
+                <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                    <table class="w-full text-left border-collapse min-w-[900px] bg-white">
+                        <thead>
+                            <tr class="bg-farm-900 text-white">
+                                <th class="p-3 font-bold text-xs uppercase tracking-wider border border-farm-800 text-center w-20">Bloco</th>
+                                <th class="p-3 font-bold text-xs uppercase tracking-wider border border-farm-800 text-center">Cultura</th>
+                                <th class="p-3 font-bold text-xs uppercase tracking-wider border border-farm-800 text-center">Variedade</th>
+                                <th class="p-3 font-bold text-xs uppercase tracking-wider border border-farm-800 text-center w-24">Bandejas</th>
+                                <th class="p-3 font-bold text-xs uppercase tracking-wider border border-farm-800 text-center w-28">Total Mudas</th>
+                                <th class="p-3 font-bold text-xs uppercase tracking-wider border border-farm-800 text-center w-32">Germinação</th>
+                                <th class="p-3 font-bold text-xs uppercase tracking-wider border border-farm-800 text-center w-32">Chegada</th>
+                                <th class="p-3 font-bold text-xs uppercase tracking-wider border border-farm-800 text-center w-24">Duração</th>
+                                <th class="p-3 font-bold text-xs uppercase tracking-wider border border-farm-800 text-center w-16 no-export">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaRegistros">
+                            <!-- Estado Vazio Inicial -->
+                            <tr id="emptyState">
+                                <td colspan="9" class="p-12 text-center text-slate-400 bg-slate-50/30 border border-slate-200">
+                                    <div class="flex flex-col items-center justify-center space-y-3">
+                                        <div class="p-3 bg-slate-100 rounded-full text-slate-400">
+                                            <i data-lucide="archive-x" class="w-8 h-8"></i>
+                                        </div>
+                                        <p class="text-sm font-medium">Nenhum lote registrado no momento.</p>
+                                        <p class="text-xs text-slate-400">Use o formulário acima para inserir novas chegadas de mudas.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Inicializar a data de hoje no painel lateral
+        document.getElementById('liveDate').innerText = new Date().toLocaleDateString('pt-BR', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        // Inicializar ícones da página
+        lucide.createIcons();
+
+        // Lista reativa de dados
+        let registros = [];
+        let itemIndexParaRemover = null;
+
+        // Custom Toast Notification System (Substitui alert padrão)
+        function mostrarNotificacao(mensagem, tipo = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            toast.className = `flex items-center gap-3 p-4 rounded-xl shadow-lg border text-sm font-medium animate-slide-in pointer-events-auto min-w-[280px] max-w-sm ${
+                tipo === 'success' 
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-100' 
+                : 'bg-rose-50 text-rose-800 border-rose-100'
+            }`;
+
+            const iconName = tipo === 'success' ? 'check-circle' : 'alert-circle';
+            toast.innerHTML = `
+                <i data-lucide="${iconName}" class="w-5 h-5 flex-shrink-0"></i>
+                <div class="flex-1">${mensagem}</div>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            // Auto-remover após 4 segundos com efeito fade-out
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                toast.style.transition = 'all 0.3s ease-in-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Custom Confirm Dialog System (Substitui confirm padrão)
+        function requisitarExclusao(index) {
+            itemIndexParaRemover = index;
+            const modal = document.getElementById('customModal');
+            const box = document.getElementById('modalBox');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                box.classList.remove('scale-95');
+                box.classList.add('scale-100');
+            }, 50);
+        }
+
+        function fecharModal() {
+            const modal = document.getElementById('customModal');
+            const box = document.getElementById('modalBox');
+            
+            modal.classList.remove('opacity-100');
+            box.classList.remove('scale-100');
+            box.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                itemIndexParaRemover = null;
+            }, 300);
+        }
+
+        // Eventos do Modal Customizado
+        document.getElementById('btnCancelModal').addEventListener('click', fecharModal);
+        document.getElementById('btnConfirmModal').addEventListener('click', () => {
+            if (itemIndexParaRemover !== null) {
+                registros.splice(itemIndexParaRemover, 1);
+                atualizarTabela();
+                mostrarNotificacao("Lote excluído permanentemente da planilha.", 'error');
+            }
+            fecharModal();
+        });
+
+        // Mostra ou oculta o input de digitação livre ("Outro")
+        function toggleOutro(campo) {
+            const select = document.getElementById(`${campo}Select`);
+            const inputOutro = document.getElementById(`${campo}Outro`);
+            
+            if (select.value === 'outro') {
+                inputOutro.classList.remove('hidden');
+                inputOutro.setAttribute('required', 'true');
+                inputOutro.focus();
+            } else {
+                inputOutro.classList.add('hidden');
+                inputOutro.removeAttribute('required');
+                inputOutro.value = '';
+            }
+        }
+
+        // Realiza o cálculo automático de mudas baseado nas bandejas
+        function calcularMudas() {
+            const bandejas = document.getElementById('bandejas').value;
+            const outputMudas = document.getElementById('totalMudas');
+
+            if (bandejas && bandejas > 0) {
+                const total = bandejas * 200;
+                outputMudas.value = total.toLocaleString('pt-BR') + " mudas";
+                outputMudas.className = "w-full pl-10 pr-3 py-3 border border-emerald-200 rounded-xl bg-emerald-50 text-farm-700 font-bold outline-none text-sm";
+            } else {
+                outputMudas.value = "";
+                outputMudas.className = "w-full pl-10 pr-3 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-500 font-bold outline-none cursor-not-allowed text-sm";
+            }
+        }
+
+        // Realiza o cálculo automático dos dias decorridos da germinação
+        function calcularDias() {
+            const dataGerm = document.getElementById('dataGerminacao').value;
+            const dataCheg = document.getElementById('dataChegada').value;
+            const outputDias = document.getElementById('diasGerminacao');
+
+            if (dataGerm && dataCheg) {
+                const date1 = new Date(dataGerm + 'T00:00:00');
+                const date2 = new Date(dataCheg + 'T00:00:00');
+                
+                const diffTime = date2 - date1;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays < 0) {
+                    outputDias.value = "Data Inválida";
+                    outputDias.className = "w-full pl-10 pr-3 py-3 border border-red-200 rounded-xl bg-red-50 text-red-600 font-bold outline-none text-sm";
+                } else {
+                    outputDias.value = diffDays === 1 ? "1 dia" : `${diffDays} dias`;
+                    outputDias.className = "w-full pl-10 pr-3 py-3 border border-emerald-100 rounded-xl bg-emerald-50/50 text-farm-700 font-bold outline-none text-sm";
+                }
+            } else {
+                outputDias.value = "";
+                outputDias.className = "w-full pl-10 pr-3 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-500 font-bold outline-none text-sm";
+            }
+        }
+
+        // Converte data americana (YYYY-MM-DD) para formato brasileiro (DD/MM/YYYY)
+        function formatarDataBR(dataStr) {
+            if(!dataStr) return "-";
+            const [ano, mes, dia] = dataStr.split('-');
+            return `${dia}/${mes}/${ano}`;
+        }
+
+        // Renderiza e atualiza o histórico na tela de forma reordenada (Ordem alfabética pelo Bloco)
+        function atualizarTabela() {
+            const tbody = document.getElementById('tabelaRegistros');
+            tbody.innerHTML = '';
+
+            if (registros.length === 0) {
+                tbody.innerHTML = `
+                    <tr id="emptyState">
+                        <td colspan="9" class="p-12 text-center text-slate-400 bg-slate-50/30 border border-slate-200">
+                            <div class="flex flex-col items-center justify-center space-y-3">
+                                <div class="p-3 bg-slate-100 rounded-full text-slate-400">
+                                    <i data-lucide="archive-x" class="w-8 h-8"></i>
+                                </div>
+                                <p class="text-sm font-medium">Nenhum lote registrado no momento.</p>
+                                <p class="text-xs text-slate-400">Use o formulário acima para inserir novas chegadas de mudas.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            // Ordenação Alfabética & Numérica Inteligente por Bloco
+            registros.sort((a, b) => {
+                return a.bloco.localeCompare(b.bloco, 'pt-BR', { numeric: true, sensitivity: 'base' });
+            });
+
+            registros.forEach((reg, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/70 transition duration-150 align-middle";
+                
+                tr.innerHTML = `
+                    <td class="p-3 text-center border border-slate-200 font-bold text-slate-900 bg-slate-50/50">${reg.bloco}</td>
+                    <td class="p-3 text-center border border-slate-200 text-slate-700 font-medium text-sm">${reg.cultura}</td>
+                    <td class="p-3 text-center border border-slate-200 text-slate-600 text-sm">${reg.variedade}</td>
+                    <td class="p-3 text-center border border-slate-200 text-slate-800 font-bold text-sm bg-sky-50/30">${reg.bandejas}</td>
+                    <td class="p-3 text-center border border-slate-200 text-farm-700 font-bold text-sm bg-emerald-50/30">${Number(reg.bandejas * 200).toLocaleString('pt-BR')}</td>
+                    <td class="p-3 text-center border border-slate-200 text-slate-600 text-sm font-medium">${formatarDataBR(reg.dataGerminacao)}</td>
+                    <td class="p-3 text-center border border-slate-200 text-slate-600 text-sm font-medium">${formatarDataBR(reg.dataChegada)}</td>
+                    <td class="p-3 text-center border border-slate-200">
+                        <span class="inline-flex items-center justify-center gap-1 text-farm-700 font-bold text-sm">
+                            ${reg.dias}
+                        </span>
+                    </td>
+                    <td class="p-2 text-center border border-slate-200 no-export">
+                        <button onclick="requisitarExclusao(${index})" class="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition" title="Excluir Lote">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Re-renderiza os ícones do Lucide correspondentes na tabela
+            lucide.createIcons();
+        }
+
+        // Submissão do Formulário e Tratamento de Dados
+        document.getElementById('registroForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Pegar valores
+            let bloco = document.getElementById('blocoSelect').value;
+            if (bloco === 'outro') bloco = document.getElementById('blocoOutro').value.trim();
+
+            let cultura = document.getElementById('culturaSelect').value;
+            if (cultura === 'outro') cultura = document.getElementById('culturaOutro').value.trim();
+
+            let variedade = document.getElementById('variedadeSelect').value;
+            if (variedade === 'outro') variedade = document.getElementById('variedadeOutro').value.trim();
+
+            const bandejas = document.getElementById('bandejas').value;
+            const dataGerminacao = document.getElementById('dataGerminacao').value;
+            const dataChegada = document.getElementById('dataChegada').value;
+            const dias = document.getElementById('diasGerminacao').value;
+
+            // Validação de segurança sobre inconsistência de datas
+            if (dias === "Data Inválida" || !dias) {
+                mostrarNotificacao("Data de chegada não pode anteceder a data de germinação.", 'error');
+                return;
+            }
+
+            // Adicionar ao array central de dados
+            registros.push({ bloco, cultura, variedade, bandejas, dataGerminacao, dataChegada, dias });
+
+            // Atualizar e renderizar
+            atualizarTabela();
+            mostrarNotificacao("Novo lote de mudas cadastrado com sucesso!");
+
+            // Limpeza e reinicialização dos campos do formulário
+            this.reset();
+            document.getElementById('diasGerminacao').value = '';
+            document.getElementById('diasGerminacao').className = "w-full pl-10 pr-3 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-500 font-bold outline-none cursor-not-allowed text-sm";
+            document.getElementById('totalMudas').value = '';
+            document.getElementById('totalMudas').className = "w-full pl-10 pr-3 py-3 border border-slate-100 rounded-xl bg-slate-50 text-slate-500 font-bold outline-none cursor-not-allowed text-sm";
+            toggleOutro('bloco');
+            toggleOutro('cultura');
+            toggleOutro('variedade');
+        });
+
+        // Formata a tabela para exportação ocultando ferramentas de edição e liberando a logomarca no cabeçalho
+        function prepararLayoutExportacao(ativar) {
+            const header = document.getElementById('exportHeader');
+            const colsToHide = document.querySelectorAll('.no-export');
+            const area = document.getElementById('areaExportacao');
+            const tableWrapper = area.querySelector('div.overflow-x-auto, div.overflow-visible');
+            
+            if (ativar) {
+                header.classList.remove('hidden');
+                document.getElementById('dataExportacao').innerText = `Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`;
+                colsToHide.forEach(el => el.style.display = 'none');
+                area.classList.add('px-8', 'py-6');
+
+                // FIX PARA EVITAR CORTE DOS DADOS:
+                // Força a área a ter uma largura fixa grande para renderizar a tabela inteira,
+                // e desativa a barra de rolagem para que a "foto" capture todos os campos.
+                area.style.width = '1200px';
+                area.style.maxWidth = '1200px';
+                if (tableWrapper) {
+                    tableWrapper.classList.remove('overflow-x-auto');
+                    tableWrapper.classList.add('overflow-visible');
+                }
+            } else {
+                header.classList.add('hidden');
+                colsToHide.forEach(el => el.style.display = '');
+                area.classList.remove('px-8', 'py-6');
+
+                // Reverte as configurações para o modo tela normal
+                area.style.width = '';
+                area.style.maxWidth = '';
+                if (tableWrapper) {
+                    tableWrapper.classList.add('overflow-x-auto');
+                    tableWrapper.classList.remove('overflow-visible');
+                }
+            }
+        }
+
+        // Exportação Dinâmica para Arquivo de Imagem (JPEG)
+        window.exportarJPEG = function() {
+            if(registros.length === 0) {
+                mostrarNotificacao("Adicione ao menos um lote para realizar a exportação.", 'error');
+                return;
+            }
+            
+            prepararLayoutExportacao(true);
+            const elemento = document.getElementById('areaExportacao');
+
+            html2canvas(elemento, { 
+                backgroundColor: '#ffffff', 
+                scale: 2, // Escala de boa qualidade que não trava navegadores
+                useCORS: true, // Permite que a logo carregue sem restrições cruzadas
+                windowWidth: 1200 // Força o canvas a enxergar uma largura cheia
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'Fazenda_Oasis_Controle_Mudas.jpeg';
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+                prepararLayoutExportacao(false);
+                mostrarNotificacao("Imagem JPEG baixada com sucesso!");
+            }).catch(err => {
+                console.error('Erro na exportação JPEG:', err);
+                prepararLayoutExportacao(false);
+                mostrarNotificacao("Ocorreu um problema ao gerar a imagem.", 'error');
+            });
+        }
+
+        // Exportação Dinâmica para Documento Impresso (PDF)
+        window.exportarPDF = function() {
+            if(registros.length === 0) {
+                mostrarNotificacao("Adicione ao menos um lote para realizar a exportação.", 'error');
+                return;
+            }
+
+            prepararLayoutExportacao(true);
+            const { jsPDF } = window.jspdf;
+            const elemento = document.getElementById('areaExportacao');
+
+            html2canvas(elemento, { 
+                backgroundColor: '#ffffff', 
+                scale: 2,
+                useCORS: true,
+                windowWidth: 1200 // Força o canvas a enxergar uma largura cheia
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('l', 'mm', 'a4'); // 'l' = Paisagem (Landscape)
+                
+                // Adicionando Margem de Respiro no PDF
+                const margin = 10; 
+                const pdfWidth = pdf.internal.pageSize.getWidth() - (margin * 2);
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', margin, margin, pdfWidth, pdfHeight);
+                pdf.save('Fazenda_Oasis_Relatorio_Mudas.pdf');
+                
+                prepararLayoutExportacao(false);
+                mostrarNotificacao("Relatório PDF baixado com sucesso!");
+            }).catch(err => {
+                console.error('Erro na exportação PDF:', err);
+                prepararLayoutExportacao(false);
+                mostrarNotificacao("Ocorreu um problema ao gerar o documento PDF.", 'error');
+            });
+        }
+    </script>
+</body>
+</html>
