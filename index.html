@@ -4,18 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fazenda Oásis - Gestão de Plantio</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.12/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.10/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         body { 
             font-family: 'Inter', sans-serif; 
             letter-spacing: -0.015em;
-            background-color: #F8FAFC; /* Slate 50 */
+            background-color: #F8FAFC;
             margin: 0;
             padding: 0;
             color: #0f172a;
@@ -99,176 +101,4 @@
                     </g>
                 ),
                 download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
-                alert: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
-                sprouts: <><path d="M7 20c0-4.418 3.582-8 8-8s8 3.582 8 8" /><path d="M2 22h20" /><path d="M12 12v10" /><path d="M12 12c-4 0-7-3-7-7s3-7 7-7 7 3 7 7-3 7-7 7z" /></>,
-                layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
-                grid: <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>,
-                leaf: <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2zm0 0v-5" />,
-                calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>
-            };
-            
-            const isPathOnly = !['truck', 'leaf'].includes(name);
-
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={isPathOnly ? "none" : "currentColor"} stroke={isPathOnly ? "currentColor" : "none"} strokeWidth={isPathOnly ? "2.5" : "0"} strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    {icons[name]}
-                </svg>
-            );
-        };
-
-        function App() {
-            const [blocos, setBlocos] = useState([]);
-            const [loading, setLoading] = useState(true);
-            const [editingRef, setEditingRef] = useState(null);
-            const [showExportTemplate, setShowExportTemplate] = useState(false);
-            const [showDeleteModal, setShowDeleteModal] = useState(false);
-            const reportRef = useRef(null);
-
-            const initialFormState = {
-                nomeBloco: 'BLOCO 01',
-                cultura: 'BRÓCOLIS',
-                culturaCustom: '',
-                variedade: 'BRAGANTINO F1',
-                variedadeCustom: '',
-                bandejas: '',
-                dataChegada: new Date().toISOString().split('T')[0],
-                dataGerminacao: ''
-            };
-
-            const [formData, setFormData] = useState(initialFormState);
-
-            // Carregamento seguro com tratamento de erros para evitar tela branca
-            useEffect(() => {
-                try {
-                    const localData = localStorage.getItem('oasis_plantio_blocos_v2');
-                    if (localData) {
-                        const parsed = JSON.parse(localData);
-                        if (Array.isArray(parsed)) setBlocos(parsed);
-                    }
-                } catch (e) {
-                    console.error("Erro ao carregar dados do LocalStorage:", e);
-                }
-                setLoading(false);
-            }, []);
-
-            const saveToLocal = (data) => {
-                try {
-                    localStorage.setItem('oasis_plantio_blocos_v2', JSON.stringify(data));
-                } catch (e) {
-                    console.error("Erro ao salvar dados no LocalStorage:", e);
-                }
-                setBlocos(data);
-            };
-
-            // Cálculo de estatísticas blindado contra propriedades nulas/indefinidas
-            const stats = useMemo(() => {
-                let totalBandejas = 0;
-                if (Array.isArray(blocos)) {
-                    blocos.forEach(b => {
-                        if (b && Array.isArray(b.variedades)) {
-                            b.variedades.forEach(v => {
-                                totalBandejas += (Number(v.bandejas) || 0);
-                            });
-                        }
-                    });
-                }
-                return { 
-                    totalBandejas, 
-                    totalMudas: totalBandejas * 200, 
-                    totalBlocos: Array.isArray(blocos) ? blocos.length : 0 
-                };
-            }, [blocos]);
-
-            const sortedBlocos = useMemo(() => {
-                if (!Array.isArray(blocos)) return [];
-                return [...blocos].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-            }, [blocos]);
-
-            const handleSave = (e) => {
-                e.preventDefault();
-                const now = new Date();
-                const bandejasNum = parseInt(formData.bandejas) || 0;
-                const nomeBlocoNorm = formData.nomeBloco;
-                
-                const nomeCultura = formData.cultura === "OUTROS..." ? formData.culturaCustom.trim().toUpperCase() : formData.cultura;
-                const nomeVariedade = formData.variedade === "OUTRO..." ? formData.variedadeCustom.trim().toUpperCase() : formData.variedade;
-                
-                if (!nomeVariedade || !nomeCultura) return;
-                
-                let updatedBlocos = [...blocos];
-                const novaVariedade = {
-                    id: editingRef ? editingRef.variedadeId : Date.now().toString(),
-                    nome: nomeVariedade,
-                    cultura: nomeCultura,
-                    bandejas: bandejasNum,
-                    totalMudas: bandejasNum * 200,
-                    dataChegada: formData.dataChegada,
-                    dataGerminacao: formData.dataGerminacao,
-                    semanaAno: getWeekNumber(new Date(formData.dataChegada)),
-                    horaRegistro: editingRef ? editingRef.horaOriginal : now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-                };
-
-                if (editingRef) {
-                    updatedBlocos = updatedBlocos.map(b => {
-                        if (b.id === editingRef.blocoId) {
-                            if (b.nome !== nomeBlocoNorm) {
-                                return { ...b, variedades: b.variedades.filter(v => v.id !== editingRef.variedadeId) };
-                            }
-                            return { ...b, variedades: b.variedades.map(v => v.id === editingRef.variedadeId ? novaVariedade : v)};
-                        }
-                        return b;
-                    }).filter(b => b.variedades && b.variedades.length > 0);
-                    
-                    if (editingRef.blocoNome !== nomeBlocoNorm) {
-                        const indexDestino = updatedBlocos.findIndex(b => b.nome === nomeBlocoNorm);
-                        if (indexDestino !== -1) updatedBlocos[indexDestino].variedades.push(novaVariedade);
-                        else updatedBlocos.push({ id: Date.now().toString(), nome: nomeBlocoNorm, variedades: [novaVariedade] });
-                    }
-                } else {
-                    const blocoExistenteIndex = updatedBlocos.findIndex(b => b.nome === nomeBlocoNorm);
-                    if (blocoExistenteIndex !== -1) updatedBlocos[blocoExistenteIndex].variedades.push(novaVariedade);
-                    else updatedBlocos.push({ id: Date.now().toString(), nome: nomeBlocoNorm, variedades: [novaVariedade] });
-                }
-                saveToLocal(updatedBlocos);
-                setEditingRef(null);
-                setFormData(initialFormState);
-            };
-
-            const captureReport = async (qualityScale = 2) => {
-                setShowExportTemplate(true);
-                await new Promise(r => setTimeout(r, 800)); 
-                const canvas = await html2canvas(reportRef.current, { scale: qualityScale, useCORS: true, backgroundColor: "#ffffff", windowWidth: 900 });
-                setShowExportTemplate(false);
-                return canvas;
-            };
-
-            const downloadJpeg = async () => {
-                const canvas = await captureReport(3);
-                const link = document.createElement('a');
-                link.download = `Relatorio_Oasis_WhatsApp.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.95);
-                link.click();
-            };
-
-            const exportPDF = async () => {
-                const canvas = await captureReport(2.5);
-                const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-                const imgData = canvas.toDataURL('image/jpeg', 0.98);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, (canvas.height * pdfWidth) / canvas.width);
-                pdf.save(`Relatorio_Oasis.pdf`);
-            };
-
-            if (loading) return null;
-
-            return (
-                <div className="min-h-screen flex flex-col pb-20">
-                    
-                    <header className="bg-white text-slate-800 py-4 px-6 border-b border-slate-200 sticky top-0 z-50 w-full shadow-sm">
-                        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div className="flex items-center gap-5">
-                                <img src={OASIS_LOGO_URL} alt="Logo Oásis" className="h-16 object-contain" crossOrigin="anonymous" />
-                                <div className="flex flex-col">
-                                    <h1 className="text-2xl font-black tracking-tight text-emerald-950 uppercase leading-none mb-1">Fazenda Oásis</h1>
-                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] leading-none">Gestão de Plantio</p>
-                                </div>
+                alert: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="
